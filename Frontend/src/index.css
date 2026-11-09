@@ -1,0 +1,95 @@
+/* ==========================================================================
+   Estilos globales de Final-Financy
+   --------------------------------------------------------------------------
+   Solo estilos básicos: reset, tipografía y variables reutilizables.
+   El diseño del dashboard y de cada sección se añadirá en su propio sprint.
+   ========================================================================== */
+
+:root {
+  /* Colores */
+  --color-bg: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-text: #1a1c1e;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-primary: #2563eb;
+
+  /* Tipografía */
+  --font-sans: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Espaciado */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Layout */
+  --sidebar-width: 240px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+/* --- Página ------------------------------------------------------------- */
+
+.page-title__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.page-title__subtitle {
+  color: var(--color-text-muted);
+}
+
+/* --- Layout principal --------------------------------------------------- */
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.layout__sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+}
+
+.layout__main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.layout__header {
+  height: 56px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.layout__content {
+  flex: 1;
+  padding: var(--space-8);
+}
