@@ -1,35 +1,35 @@
+import { useState, useCallback } from 'react'
 import { Outlet } from 'react-router-dom'
+import Sidebar from '../components/Sidebar'
 
 /**
  * MainLayout
  *
- * Layout general de las páginas queikmati sesión iniciada:
+ * Layout general de las páginas que requieren sesión iniciada:
  * dashboard, movimientos, reportes, ahorro, presupuestos y ajustes.
  *
- * Renderiza los elementos comunes de la aplicación (sidebar, navegación y
- * barra superior) y las páginas hijas a través de <Outlet />.
- *
- * Estructura de la aplicación:
- *
- *   <MainLayout>
- *     <Outlet />  -> página actual
- *   </MainLayout>
+ * Renderiza el Sidebar y las páginas hijas a través de <Outlet />.
+ * El estado del sidebar (abierto/cerrado en móvil) se gestiona aquí
+ * y se propaga al Sidebar y a las páginas hijas mediante context del Outlet.
  *
  * Todavía NO se implementa autenticación ni protección de rutas.
  */
 function MainLayout() {
+  const [sidebarAbierto, setSidebarAbierto] = useState(false)
+
+  const cerrarSidebar = useCallback(() => setSidebarAbierto(false), [])
+  const toggleSidebar = useCallback(
+    () => setSidebarAbierto((prev) => !prev),
+    [],
+  )
+
   return (
     <div className="layout">
-      {/* Barra lateral: aquí irá el logo, la navegación y el cierre de sesión. */}
-      <aside className="layout__sidebar" />
+      <Sidebar isOpen={sidebarAbierto} onClose={cerrarSidebar} />
 
       <div className="layout__main">
-        {/* Barra superior: aquí irá el usuario actual y acciones rápidas. */}
-        <header className="layout__header" />
-
-        {/* Contenido principal: se inyecta la página de la ruta activa. */}
         <main className="layout__content">
-          <Outlet />
+          <Outlet context={{ toggleSidebar }} />
         </main>
       </div>
     </div>
