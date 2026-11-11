@@ -7,23 +7,22 @@ import RecentMovements from '../components/RecentMovements'
 import BudgetRule from '../components/BudgetRule'
 import NewMovementModal from '../components/NewMovementModal'
 
-import { resumenMensual, movimientos, regla503020 } from '../data/mockData'
+import { useMovimientos } from '../hooks/useMovimientos'
+import { regla503020 } from '../data/mockData'
 
 /**
  * Dashboard
  *
  * Página principal de la aplicación: resumen financiero del mes.
- * Organiza los componentes y les pasa los datos mock.
- *
- * Cuando el backend esté disponible, los datos mock se reemplazarán
- * por llamadas a services/api.js (ej: useEffect + fetch).
+ * Consume los movimientos y el resumen del contexto unificado para mantener
+ * consistencia total con el módulo de Movimientos.
  */
 function Dashboard() {
   const [modalAbierto, setModalAbierto] = useState(false)
   const { toggleSidebar } = useOutletContext()
+  const { movimientos, resumenMensual, agregarMovimiento } = useMovimientos()
 
-  const { ingresos, gastos } = resumenMensual
-  const balance = ingresos - gastos
+  const { ingresos, gastos, balance } = resumenMensual
 
   return (
     <>
@@ -67,6 +66,7 @@ function Dashboard() {
       <NewMovementModal
         isOpen={modalAbierto}
         onClose={() => setModalAbierto(false)}
+        onSave={agregarMovimiento}
       />
     </>
   )

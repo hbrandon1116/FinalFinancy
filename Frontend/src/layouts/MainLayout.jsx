@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import { MovimientosProvider } from '../context/MovimientosContext'
 
 /**
  * MainLayout
@@ -9,10 +10,8 @@ import Sidebar from '../components/Sidebar'
  * dashboard, movimientos, reportes, ahorro, presupuestos y ajustes.
  *
  * Renderiza el Sidebar y las páginas hijas a través de <Outlet />.
- * El estado del sidebar (abierto/cerrado en móvil) se gestiona aquí
- * y se propaga al Sidebar y a las páginas hijas mediante context del Outlet.
- *
- * Todavía NO se implementa autenticación ni protección de rutas.
+ * Provee el contexto global de Movimientos para mantener la coherencia
+ * de datos en memoria entre todas las vistas de la app.
  */
 function MainLayout() {
   const [sidebarAbierto, setSidebarAbierto] = useState(false)
@@ -24,15 +23,17 @@ function MainLayout() {
   )
 
   return (
-    <div className="layout">
-      <Sidebar isOpen={sidebarAbierto} onClose={cerrarSidebar} />
+    <MovimientosProvider>
+      <div className="layout">
+        <Sidebar isOpen={sidebarAbierto} onClose={cerrarSidebar} />
 
-      <div className="layout__main">
-        <main className="layout__content">
-          <Outlet context={{ toggleSidebar }} />
-        </main>
+        <div className="layout__main">
+          <main className="layout__content">
+            <Outlet context={{ toggleSidebar }} />
+          </main>
+        </div>
       </div>
-    </div>
+    </MovimientosProvider>
   )
 }
 

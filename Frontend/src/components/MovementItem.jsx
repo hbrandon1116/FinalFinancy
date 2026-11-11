@@ -4,18 +4,15 @@ import { fechaRelativa } from '../utils/format'
 /**
  * MovementItem
  *
- * Fila individual de un movimiento financiero.
+ * Fila individual de un movimiento financiero en la vista de recientes.
  *
  * @param {object} props
  * @param {object} props.movimiento
- * @param {string} props.movimiento.nombre
- * @param {string} props.movimiento.fecha
- * @param {number} props.movimiento.monto
- * @param {'ingreso'|'gasto'} props.movimiento.tipo
- * @param {string} props.movimiento.categoria
  */
 function MovementItem({ movimiento }) {
-  const { nombre, fecha, monto, tipo, categoria } = movimiento
+  const { tipo, categoria, fecha } = movimiento
+  const nombre = movimiento.descripcion || movimiento.nombre || 'Movimiento'
+  const monto = movimiento.valor ?? movimiento.monto ?? 0
   const esIngreso = tipo === 'ingreso'
 
   return (
