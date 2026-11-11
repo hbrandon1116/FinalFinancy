@@ -123,3 +123,27 @@ export function formatearNombreMes(claveMes) {
   const capitalizado = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)
   return `${capitalizado} ${anio}`
 }
+
+/**
+ * Calcula la clave YYYY-MM del mes anterior.
+ * @param {string} claveMes
+ * @returns {string}
+ */
+export function obtenerMesAnterior(claveMes) {
+  if (!claveMes || !claveMes.includes('-')) return claveMes
+  const [anio, mes] = claveMes.split('-').map(Number)
+  const fecha = new Date(anio, mes - 2, 1)
+  return obtenerClaveMes(fecha)
+}
+
+/**
+ * Calcula la clave YYYY-MM del mes siguiente.
+ * @param {string} claveMes
+ * @returns {string}
+ */
+export function obtenerMesSiguiente(claveMes) {
+  if (!claveMes || !claveMes.includes('-')) return claveMes
+  const [anio, mes] = claveMes.split('-').map(Number)
+  const fecha = new Date(anio, mes, 1)
+  return obtenerClaveMes(fecha)
+}

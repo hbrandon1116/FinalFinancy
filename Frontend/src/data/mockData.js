@@ -9,6 +9,8 @@
  * a services/api.js sin necesidad de modificar los componentes.
  */
 
+import { obtenerClaveMes } from '../utils/format'
+
 const ahora = Date.now()
 const unDia = 24 * 60 * 60 * 1000
 
@@ -200,8 +202,58 @@ export const categorias = [
   { id: 'otros-gastos', nombre: 'Otros gastos', tipo: 'gasto' },
 ]
 
-/** @type {Array<object>} Presupuestos por categoría. */
-export const presupuestos = []
+const claveMesActual = obtenerClaveMes(new Date(ahora))
+const claveMesAnterior = obtenerClaveMes(new Date(ahora - 30 * unDia))
+
+/**
+ * Presupuestos mensuales iniciales por categoría.
+ * Permiten evaluar los estados: normal (<80%), alerta (>=80%) y superado (>100%).
+ */
+export const presupuestos = [
+  {
+    id: 1,
+    categoria: 'Alimentación',
+    limite: 300000,
+    mes: claveMesActual,
+  },
+  {
+    id: 2,
+    categoria: 'Transporte',
+    limite: 60000,
+    mes: claveMesActual,
+  },
+  {
+    id: 3,
+    categoria: 'Entretenimiento',
+    limite: 50000,
+    mes: claveMesActual,
+  },
+  {
+    id: 4,
+    categoria: 'Servicios',
+    limite: 120000,
+    mes: claveMesActual,
+  },
+  {
+    id: 5,
+    categoria: 'Salud',
+    limite: 100000,
+    mes: claveMesActual,
+  },
+  // Presupuestos del mes anterior
+  {
+    id: 6,
+    categoria: 'Vivienda',
+    limite: 700000,
+    mes: claveMesAnterior,
+  },
+  {
+    id: 7,
+    categoria: 'Alimentación',
+    limite: 200000,
+    mes: claveMesAnterior,
+  },
+]
 
 /** @type {Array<object>} Metas de ahorro. */
 export const metasAhorro = []

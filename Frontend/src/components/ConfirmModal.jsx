@@ -1,19 +1,29 @@
+import { formatearMoneda, formatearFecha, formatearNombreMes } from '../utils/format'
+
 /**
  * ConfirmModal
  *
- * Diálogo accesible de confirmación para acciones destructivas (como eliminar un movimiento).
+ * Diálogo accesible de confirmación para acciones destructivas
+ * (como eliminar un movimiento o un presupuesto).
  *
  * @param {object} props
  * @param {boolean} props.isOpen
- * @param {string} props.title
+ * @param {string} [props.title]
  * @param {string} props.message
  * @param {object} [props.movement] - Movimiento a eliminar para mostrar contexto.
+ * @param {object} [props.budget] - Presupuesto a eliminar para mostrar contexto.
  * @param {() => void} props.onConfirm
  * @param {() => void} props.onCancel
  */
-import { formatearMoneda, formatearFecha } from '../utils/format'
-
-function ConfirmModal({ isOpen, title = 'Confirmar acción', message, movement, onConfirm, onCancel }) {
+function ConfirmModal({
+  isOpen,
+  title = 'Confirmar acción',
+  message,
+  movement = null,
+  budget = null,
+  onConfirm,
+  onCancel,
+}) {
   if (!isOpen) return null
 
   return (
@@ -74,6 +84,7 @@ function ConfirmModal({ isOpen, title = 'Confirmar acción', message, movement, 
         <div className="confirm-modal__body">
           <p className="confirm-modal__message">{message}</p>
 
+          {/* Previsualización si es un Movimiento */}
           {movement && (
             <div className="confirm-modal__preview">
               <span className={`confirm-modal__preview-badge confirm-modal__preview-badge--${movement.tipo}`}>
@@ -90,6 +101,26 @@ function ConfirmModal({ isOpen, title = 'Confirmar acción', message, movement, 
               <span className={`confirm-modal__preview-monto confirm-modal__preview-monto--${movement.tipo}`}>
                 {movement.tipo === 'ingreso' ? '+' : '-'}
                 {formatearMoneda(movement.valor || movement.monto)}
+              </span>
+            </div>
+          )}
+
+          {/* Previsualización si es un Presupuesto */}
+          {budget && (
+            <div className="confirm-modal__preview">
+              <span className="confirm-modal__preview-badge confirm-modal__preview-badge--budget">
+                Presupuesto
+              </span>
+              <div className="confirm-modal__preview-info">
+                <strong className="confirm-modal__preview-desc">
+                  {budget.categoria}
+                </strong>
+                <span className="confirm-modal__preview-meta">
+                  {formatearNombreMes(budget.mes)}
+                </span>
+              </div>
+              <span className="confirm-modal__preview-monto">
+                {formatearMoneda(budget.limite)}
               </span>
             </div>
           )}
