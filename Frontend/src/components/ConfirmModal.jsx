@@ -4,7 +4,7 @@ import { formatearMoneda, formatearFecha, formatearNombreMes } from '../utils/fo
  * ConfirmModal
  *
  * Diálogo accesible de confirmación para acciones destructivas
- * (como eliminar un movimiento o un presupuesto).
+ * (como eliminar un movimiento, un presupuesto o una meta de ahorro).
  *
  * @param {object} props
  * @param {boolean} props.isOpen
@@ -12,6 +12,7 @@ import { formatearMoneda, formatearFecha, formatearNombreMes } from '../utils/fo
  * @param {string} props.message
  * @param {object} [props.movement] - Movimiento a eliminar para mostrar contexto.
  * @param {object} [props.budget] - Presupuesto a eliminar para mostrar contexto.
+ * @param {object} [props.goal] - Meta de ahorro a eliminar para mostrar contexto.
  * @param {() => void} props.onConfirm
  * @param {() => void} props.onCancel
  */
@@ -21,6 +22,7 @@ function ConfirmModal({
   message,
   movement = null,
   budget = null,
+  goal = null,
   onConfirm,
   onCancel,
 }) {
@@ -121,6 +123,26 @@ function ConfirmModal({
               </div>
               <span className="confirm-modal__preview-monto">
                 {formatearMoneda(budget.limite)}
+              </span>
+            </div>
+          )}
+
+          {/* Previsualización si es una Meta de Ahorro */}
+          {goal && (
+            <div className="confirm-modal__preview">
+              <span className="confirm-modal__preview-badge confirm-modal__preview-badge--goal">
+                Meta de ahorro
+              </span>
+              <div className="confirm-modal__preview-info">
+                <strong className="confirm-modal__preview-desc">
+                  {goal.nombre}
+                </strong>
+                <span className="confirm-modal__preview-meta">
+                  Ahorrado: {formatearMoneda(goal.ahorrado)} · Límite: {formatearFecha(goal.fechaLimite)}
+                </span>
+              </div>
+              <span className="confirm-modal__preview-monto">
+                {formatearMoneda(goal.objetivo)}
               </span>
             </div>
           )}

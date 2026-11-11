@@ -255,8 +255,72 @@ export const presupuestos = [
   },
 ]
 
-/** @type {Array<object>} Metas de ahorro. */
-export const metasAhorro = []
+/**
+ * Metas de ahorro iniciales con historial de aportes.
+ * Ilustran los tres estados posibles: en-progreso, completada y vencida.
+ */
+export const metasAhorro = [
+  {
+    id: 1,
+    nombre: 'Fondo de Emergencia',
+    descripcion: 'Ahorro para cubrir 3 meses de gastos esenciales ante imprevistos.',
+    objetivo: 3000000,
+    ahorrado: 1800000,
+    fechaLimite: new Date(ahora + 90 * unDia).toISOString(),
+    aportes: [
+      {
+        id: 101,
+        valor: 1000000,
+        fecha: new Date(ahora - 30 * unDia).toISOString(),
+        descripcion: 'Aporte inicial apertura de fondo',
+      },
+      {
+        id: 102,
+        valor: 800000,
+        fecha: new Date(ahora - 10 * unDia).toISOString(),
+        descripcion: 'Ahorro segunda quincena',
+      },
+    ],
+  },
+  {
+    id: 2,
+    nombre: 'Nuevo Computador Portátil',
+    descripcion: 'Equipo de trabajo para desarrollo de software y diseño.',
+    objetivo: 2500000,
+    ahorrado: 2500000,
+    fechaLimite: new Date(ahora + 30 * unDia).toISOString(),
+    aportes: [
+      {
+        id: 201,
+        valor: 1500000,
+        fecha: new Date(ahora - 45 * unDia).toISOString(),
+        descripcion: 'Aporte quincenal programado',
+      },
+      {
+        id: 202,
+        valor: 1000000,
+        fecha: new Date(ahora - 5 * unDia).toISOString(),
+        descripcion: 'Bono extraordinario de fin de proyecto',
+      },
+    ],
+  },
+  {
+    id: 3,
+    nombre: 'Curso Especialización Cloud',
+    descripcion: 'Certificación profesional en infraestructura y arquitectura.',
+    objetivo: 1200000,
+    ahorrado: 600000,
+    fechaLimite: new Date(ahora - 15 * unDia).toISOString(),
+    aportes: [
+      {
+        id: 301,
+        valor: 600000,
+        fecha: new Date(ahora - 40 * unDia).toISOString(),
+        descripcion: 'Primer abono para la meta',
+      },
+    ],
+  },
+]
 
 export const mockData = {
   resumenMensual,
