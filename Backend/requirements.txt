@@ -1,0 +1,12 @@
+# Core stack (documented in docs/backend/backend-architecture.md).
+Django==5.2.19
+djangorestframework==3.18.3
+djangorestframework-simplejwt==5.5.1
+
+# PostgreSQL driver and DATABASE_URL parsing.
+psycopg[binary]==3.3.9
+dj-database-url==3.1.2
+
+# CORS and local .env loading.
+django-cors-headers==4.9.0
+python-dotenv==1.2.4

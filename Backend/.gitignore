@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.venv/
+venv/
+ENV/
+
+# Django and local state
+.env
+.env.*
+!.env.example
+db.sqlite3
+staticfiles/
+media/
+*.log
+
+# Test and tooling artifacts
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Editors
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

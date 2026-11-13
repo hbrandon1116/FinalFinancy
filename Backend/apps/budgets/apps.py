@@ -1,0 +1,10 @@
+"""Application configuration for the budgets app."""
+
+from django.apps import AppConfig
+
+
+class BudgetsConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "apps.budgets"
+    label = "budgets"
+    verbose_name = "Presupuestos"
