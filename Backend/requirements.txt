@@ -10,3 +10,6 @@ dj-database-url==3.1.2
 # CORS and local .env loading.
 django-cors-headers==4.9.0
 python-dotenv==1.2.4
+
+
+gunicorn==25.1.0
