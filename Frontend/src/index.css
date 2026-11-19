@@ -361,6 +361,12 @@ input {
 /* ==========================================================================
    DASHBOARD PAGE
    ========================================================================== */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
 .dashboard__summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -368,10 +374,15 @@ input {
   margin-bottom: var(--space-6);
 }
 
+/* La regla 50/30/20 queda arriba y a ancho completo; los movimientos
+   recientes ocupan el resto del área principal disponible. */
 .dashboard__bottom {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(auto, 1fr);
   gap: var(--space-5);
+  flex: 1;
+  min-height: 0;
 }
 
 /* ==========================================================================
@@ -646,9 +657,10 @@ input {
 }
 
 .budget-rule__grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-5);
+  align-items: start;
 }
 
 .budget-rule__item {
@@ -1237,6 +1249,11 @@ input {
   }
 
   .dashboard__bottom {
+    grid-template-columns: 1fr;
+  }
+
+  /* Las tres categorías de la regla se apilan en tablet/móvil. */
+  .budget-rule__grid {
     grid-template-columns: 1fr;
   }
 }

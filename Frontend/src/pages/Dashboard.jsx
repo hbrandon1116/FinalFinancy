@@ -56,10 +56,10 @@ function Dashboard() {
           />
         </section>
 
-        {/* Contenido inferior: movimientos y regla 50/30/20 */}
+        {/* Contenido inferior: regla 50/30/20 y movimientos recientes */}
         <div className="dashboard__bottom">
-          <RecentMovements movimientos={movimientos} />
           <BudgetRule categorias={regla503020} />
+          <RecentMovements movimientos={movimientos} />
         </div>
       </div>
 
