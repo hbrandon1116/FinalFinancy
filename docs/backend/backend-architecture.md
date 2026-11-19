@@ -810,22 +810,34 @@ El frontend no se modifica en esta etapa. Cuando el backend esté listo:
 
 ## 13. Fases de implementación recomendadas
 
-La autenticación JWT/cookies/CSRF es transversal: debe completarse antes de
-exponer endpoints financieros. Los settings y la infraestructura ya existen; las
-vistas, cookies y servicios de cuenta siguen pendientes. No se cuenta como una
-fase de modelo separada.
+La autenticación es una **condición de entrada**, no un cierre. La implementación
+de JWT, refresh token en cookie `HttpOnly`, logout, rotación/blacklist y
+protección CSRF comienza en la **fase 1** y se prueba allí, junto con `User` y
+los modelos base. No se difiere a la fase 8.
+
+Ningún endpoint financiero protegido de las fases 2–7 se habilita hasta que el
+**gate de autenticación de la fase 1** esté operativo y probado: login, refresh
+rotativo, logout, validación del access token, cookie `HttpOnly` y CSRF en
+refresh/logout. Las fases 2–7 ordenan modelos y dominio; **no autorizan** a
+publicar rutas sin autenticación. Cada endpoint protegido debe usar
+`IsAuthenticated`, aislamiento por propietario y las pruebas de 401/403/CSRF
+correspondientes.
 
 | Fase | Entregable | Dependencia y migración | Criterio de aceptación |
 | --- | --- | --- | --- |
 | 0 | Línea base actual: proyecto Django, settings, `User`, modelos base, exception handler y suite no-DB | Ya completada; no hay migraciones. | `manage.py check` sin errores; 29 tests exitosos. |
-| 1 | Revisar y estabilizar `User` y los modelos base; primera migración del usuario | Ninguna dependencia de modelos financieros. Migración inicial de `users`; los modelos abstractos no crean tablas. | `User` con email, `full_name` normalizado, constraints declaradas y migración aplicada; sin tablas financieras todavía. |
-| 2 | `Category` + catálogo predeterminado + cierre del registro | Depende de `User`. Migración de `categories` posterior a `users`. El alta de usuario crea el catálogo en la misma transacción. | CRUD de categorías, unicidad, propiedad, `PROTECT` y catálogo inicial probados. |
-| 3 | `SavingsGoal` + CRUD y archivado | Depende de `User`. Migración de `savings` posterior a `users`. | Meta con progreso derivado, `status` calculado, archivo lógico y unicidad de metas activas; sin aportes todavía. |
-| 4 | `Movement` + `IdempotencyRecord` + ingresos/gastos | Depende de `Category`, `SavingsGoal` y `User`. Migraciones de `movements` y `common` después de categorías y metas. | `POST /movements/` solo crea `income`/`expense`, usa idempotencia y respeta la restricción de forma. El modelo admite transferencias, pero el endpoint de aportes se habilita en la fase 6. |
-| 5 | `Budget` + consumo mensual | Depende de `Category`; los selectores de consumo dependen de `Movement`. Migración de `budgets` posterior a `categories`. | Presupuestos únicos por usuario/categoría/mes, estados 80/100 y exclusión de ahorro probados. |
-| 6 | Aportes a metas | Depende de `Movement` y `SavingsGoal`. No crea tabla de aportes; solo migración si se añaden índices o constraints. | Único canal `POST /savings-goals/{id}/contributions/`; transferencia sin categoría, idempotente y transaccional; sobreahorro y archivo probados. |
-| 7 | Analítica, Dashboard y Reportes | Depende de todos los modelos y selectores anteriores. Sin migración. | Agregados reutilizados, meses calendario completos, 50/30/20 correcta y contrato de reportes probado. |
-| 8 | Cierre de seguridad, despliegue y adaptador frontend | Posterior a las fases 1–7; no cambia modelos financieros. | Variables de producción verificadas, migraciones aplicadas, OpenAPI si se adopta y frontend integrado. |
+| 1 | `User` + modelos base + núcleo de autenticación: access token JWT, refresh en cookie `HttpOnly`, logout, rotación/blacklist, CSRF y endpoints de login/refresh/logout/csrf. El registro completo se cierra en la fase 2 junto con el catálogo. | Ninguna dependencia de modelos financieros. Migración inicial de `users`; los modelos abstractos no crean tablas. El registro con categorías depende de `Category` (fase 2). | Gate de autenticación operativo y probado: login, refresh, logout, rotación/blacklist, cookie `HttpOnly`, CSRF y rechazo de accesos no autenticados. Migración de `users` aplicada; sin tablas financieras todavía. |
+| 2 | `Category` + catálogo predeterminado + cierre del registro | **Solo después del gate de la fase 1.** Depende de `User`. Migración de `categories` posterior a `users`. El alta de usuario crea el catálogo en la misma transacción. | Autenticación previamente probada; CRUD de categorías, unicidad, propiedad, `PROTECT` y catálogo inicial probados. |
+| 3 | `SavingsGoal` + CRUD y archivado | **Solo después del gate de la fase 1.** Depende de `User`. Migración de `savings` posterior a `users`. | Autenticación previamente probada; meta con progreso derivado, `status` calculado, archivo lógico y unicidad de metas activas; sin aportes todavía. |
+| 4 | `Movement` + `IdempotencyRecord` + ingresos/gastos | **Solo después del gate de la fase 1.** Depende de `Category`, `SavingsGoal` y `User`. Migraciones de `movements` y `common` después de categorías y metas. | Autenticación previamente probada; `POST /movements/` solo crea `income`/`expense`, usa idempotencia y respeta la restricción de forma. El modelo admite transferencias, pero el endpoint de aportes se habilita en la fase 6. |
+| 5 | `Budget` + consumo mensual | **Solo después del gate de la fase 1.** Depende de `Category`; los selectores de consumo dependen de `Movement`. Migración de `budgets` posterior a `categories`. | Autenticación previamente probada; presupuestos únicos por usuario/categoría/mes, estados 80/100 y exclusión de ahorro probados. |
+| 6 | Aportes a metas | **Solo después del gate de la fase 1.** Depende de `Movement` y `SavingsGoal`. No crea tabla de aportes; solo migración si se añaden índices o constraints. | Autenticación previamente probada; único canal `POST /savings-goals/{id}/contributions/`; transferencia sin categoría, idempotente y transaccional; sobreahorro y archivo probados. |
+| 7 | Analítica, Dashboard y Reportes | **Solo después del gate de la fase 1.** Depende de todos los modelos y selectores anteriores. Sin migración. | Autenticación previamente probada; agregados reutilizados, meses calendario completos, 50/30/20 correcta y contrato de reportes probado. |
+| 8 | Endurecimiento final de seguridad, revisión de configuración de producción, despliegue e integración del frontend | Posterior a las fases 1–7. **No implementa autenticación**; presupone el gate de la fase 1 ya completado. No cambia modelos financieros. | Revisión de `prod.py`, cookies `Secure`, CORS/CSRF, HSTS, migraciones de las fases 1–7 aplicadas, despliegue verificado y frontend integrado. OpenAPI si se adopta. |
+
+La autenticación no se considera entregada por tener solo los settings: requiere
+flujo real y pruebas. Las fases 2–7 no pueden ejecutarse ni exponer endpoints
+protegidos mientras el gate de la fase 1 no esté verde.
 
 Cada fase que cambie el esquema debe incluir su migración y sus pruebas. Las
 fases 6 y 7 no crean tablas; solo generan migración si añaden constraints o
