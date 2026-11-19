@@ -1,6 +1,6 @@
-# FinanzasPro — Backend
+# FinalFinancy — Backend
 
-Backend Django del MVP de FinanzasPro. Esta fase deja el proyecto, la
+Backend Django del MVP de FinalFinancy. Esta fase deja el proyecto, la
 configuración de Django REST Framework/SimpleJWT y PostgreSQL preparados, pero
 **no implementa todavía los modelos financieros ni los endpoints de negocio**.
 

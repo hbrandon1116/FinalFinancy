@@ -1,4 +1,4 @@
-# Documentación de Sprints — Final-Financy (Frontend)
+# Documentación de Sprints — FinalFinancy (Frontend)
 
 Registro de lo realizado en cada sprint del frontend.
 
@@ -62,7 +62,7 @@ principales creadas, sin desarrollar todavía ninguna funcionalidad.
 
 | Archivo | Cambio |
 | --- | --- |
-| `index.html` | `lang="es"` y `<title>Final-Financy</title>`. |
+| `index.html` | `lang="es"` y `<title>FinalFinancy</title>`. |
 | `package.json` | Sin cambios: `react-router-dom` ya estaba instalado. |
 
 ### Estructura final

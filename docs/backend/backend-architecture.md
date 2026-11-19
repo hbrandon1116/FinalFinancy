@@ -1,4 +1,4 @@
-# Arquitectura del backend — FinanzasPro
+# Arquitectura del backend — FinalFinancy
 
 > Estado: **arquitectura vigente del MVP; implementación por fases en curso**.
 > La base técnica (proyecto Django, settings por entorno, `User`, modelos base y

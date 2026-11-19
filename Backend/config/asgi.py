@@ -1,4 +1,4 @@
-"""ASGI entry point for FinanzasPro."""
+"""ASGI entry point for FinalFinancy."""
 
 import os
 

@@ -1,4 +1,4 @@
-"""Production settings for FinanzasPro.
+"""Production settings for FinalFinancy.
 
 This module is intentionally conservative. It does not contain secret values;
 they must be provided through environment variables. Startup fails when a

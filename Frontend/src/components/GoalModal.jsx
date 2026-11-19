@@ -95,7 +95,7 @@ function GoalFormInner({ metaAEditar, onSave, onClose }) {
   return (
     <form className="modal__form" onSubmit={handleSubmit} noValidate>
       {errorServidor && (
-        <div className="login-form__alert login-form__alert--error" style={{ color: '#f87171', backgroundColor: 'rgba(239, 68, 68, 0.15)', padding: '0.75rem', borderRadius: '0.5rem' }}>
+        <div className="login-form__alert login-form__alert--error" style={{ color: '#ff5a6e', backgroundColor: 'rgba(255, 90, 110, 0.15)', padding: '0.75rem', borderRadius: '0.5rem' }}>
           <span>{errorServidor}</span>
         </div>
       )}

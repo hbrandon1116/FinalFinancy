@@ -1,4 +1,4 @@
-"""Common settings for FinanzasPro.
+"""Common settings for FinalFinancy.
 
 The environment-specific modules (development, production and tests) import
 from this file. Secrets must come from environment variables or a local .env

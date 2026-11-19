@@ -1,4 +1,4 @@
-# Diseño de base de datos — FinanzasPro
+# Diseño de base de datos — FinalFinancy
 
 > Estado: **diseño canónico del MVP; implementación parcial**. El proyecto Django,
 > el modelo `User` y los modelos base ya existen en código. Las entidades

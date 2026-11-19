@@ -1,4 +1,4 @@
-"""WSGI entry point for FinanzasPro."""
+"""WSGI entry point for FinalFinancy."""
 
 import os
 

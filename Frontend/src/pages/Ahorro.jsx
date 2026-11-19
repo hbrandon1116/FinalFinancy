@@ -14,7 +14,7 @@ import { useAhorro } from '../hooks/useAhorro'
 /**
  * Ahorro
  *
- * Página de metas de ahorro e inversión personal de FinanzasPro.
+ * Página de metas de ahorro e inversión personal de FinalFinancy.
  * Permite crear metas, registrar aportes, consultar el progreso en tiempo real
  * y revisar el historial de transacciones de cada objetivo.
  */

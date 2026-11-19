@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 /**
  * RegisterForm
  *
- * Formulario de registro de nuevos usuarios en FinanzasPro.
+ * Formulario de registro de nuevos usuarios en FinalFinancy.
  * Gestiona el estado de los campos, validación reactiva de nombre, correo,
  * contraseña (mínimo 8 caracteres), confirmación y aceptación de términos.
  *
@@ -481,7 +481,7 @@ function RegisterForm() {
               className="login-form__link login-form__link--highlight"
               onClick={(e) => {
                 e.preventDefault()
-                alert('Términos y condiciones del servicio FinanzasPro.')
+                alert('Términos y condiciones del servicio FinalFinancy.')
               }}
             >
               términos y condiciones

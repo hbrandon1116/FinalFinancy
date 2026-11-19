@@ -1,4 +1,4 @@
-# Contrato de API — FinanzasPro
+# Contrato de API — FinalFinancy
 
 > Estado: **contrato oficial del MVP; implementación pendiente de endpoints**.
 > El proyecto Django, los settings, el modelo `User`, los modelos base y el

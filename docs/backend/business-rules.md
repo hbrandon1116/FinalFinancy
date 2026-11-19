@@ -1,4 +1,4 @@
-# Reglas de negocio financieras — FinanzasPro
+# Reglas de negocio financieras — FinalFinancy
 
 > Estado: **reglas oficiales vigentes del MVP; implementación financiera
 > pendiente**. Este documento conserva las fórmulas y decisiones de negocio; no

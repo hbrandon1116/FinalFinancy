@@ -25,7 +25,7 @@ import { formatearFecha, aFechaInput } from '../utils/format'
 /**
  * Reportes
  *
- * Módulo de inteligencia financiera y visualización analítica de FinanzasPro.
+ * Módulo de inteligencia financiera y visualización analítica de FinalFinancy.
  * Cruza datos en tiempo real de movimientos y metas de ahorro para graficar:
  * - Ingresos vs Gastos mensuales
  * - Gastos por categoría
@@ -204,7 +204,7 @@ function Reportes() {
         </div>
       </div>
 
-      {/* Modal para crear movimiento si el usuario pulsa "+ Nueva mov." desde el header */}
+      {/* Modal para crear movimiento si el usuario pulsa "+ Nuevo movimiento" desde el header */}
       <MovementModal
         isOpen={modalNuevoMovimiento}
         onClose={() => setModalNuevoMovimiento(false)}

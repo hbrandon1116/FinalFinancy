@@ -126,7 +126,7 @@ function IncomeExpenseChart({ datosMensuales }) {
                   x={paddingLeft - 8}
                   y={y + 4}
                   textAnchor="end"
-                  fill="#94a3b8"
+                  fill="#86b3bf"
                   fontSize="10"
                   fontFamily="inherit"
                 >
@@ -164,7 +164,7 @@ function IncomeExpenseChart({ datosMensuales }) {
                   rx="4"
                 />
 
-                {/* Barra de Ingreso (Verde) */}
+                {/* Barra de Ingreso (Cian) */}
                 <rect
                   x={groupX}
                   y={incomeY}
@@ -175,7 +175,7 @@ function IncomeExpenseChart({ datosMensuales }) {
                   opacity={isHovered ? 1 : 0.9}
                 />
 
-                {/* Barra de Gasto (Rojo) */}
+                {/* Barra de Gasto (Magenta) */}
                 <rect
                   x={groupX + barWidth + 4}
                   y={expenseY}
@@ -191,7 +191,7 @@ function IncomeExpenseChart({ datosMensuales }) {
                   x={paddingLeft + idx * groupWidth + groupWidth / 2}
                   y={svgHeight - 12}
                   textAnchor="middle"
-                  fill={isHovered ? '#f1f5f9' : '#94a3b8'}
+                  fill={isHovered ? '#f2fafc' : '#86b3bf'}
                   fontSize="11"
                   fontWeight={isHovered ? 'bold' : 'normal'}
                 >
@@ -204,12 +204,12 @@ function IncomeExpenseChart({ datosMensuales }) {
           {/* Gradientes SVG */}
           <defs>
             <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22c55e" />
-              <stop offset="100%" stopColor="#15803d" />
+              <stop offset="0%" stopColor="#28afcb" />
+              <stop offset="100%" stopColor="#0f6e86" />
             </linearGradient>
             <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#ef4444" />
-              <stop offset="100%" stopColor="#b91c1c" />
+              <stop offset="0%" stopColor="#ff3d8e" />
+              <stop offset="100%" stopColor="#a8245c" />
             </linearGradient>
           </defs>
         </svg>
@@ -224,7 +224,7 @@ function IncomeExpenseChart({ datosMensuales }) {
               Ingresos: <strong className="color-success">+{formatearMoneda(mesHover.ingresos)}</strong>
             </span>
             <span>
-              Gastos: <strong className="color-danger">-{formatearMoneda(mesHover.gastos)}</strong>
+              Gastos: <strong className="color-accent">-{formatearMoneda(mesHover.gastos)}</strong>
             </span>
             <span>
               Diferencia:{' '}
@@ -252,7 +252,7 @@ function IncomeExpenseChart({ datosMensuales }) {
           <div className="report-highlight report-highlight--expense">
             <span className="report-highlight__label">Mayor gasto</span>
             <strong className="report-highlight__value">{mesMayorGasto.nombreMes}</strong>
-            <span className="report-highlight__monto color-danger">
+            <span className="report-highlight__monto color-accent">
               -{formatearMoneda(mesMayorGasto.gastos)}
             </span>
           </div>

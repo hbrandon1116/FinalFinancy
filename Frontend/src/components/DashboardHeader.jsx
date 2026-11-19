@@ -6,7 +6,7 @@
  *
  * @param {object} props
  * @param {string} props.titulo - Título de la sección actual.
- * @param {() => void} props.onNuevoMovimiento - Callback al pulsar "+ Nueva mov."
+ * @param {() => void} props.onNuevoMovimiento - Callback al pulsar "+ Nuevo movimiento"
  * @param {() => void} props.onToggleSidebar - Abre/cierra el sidebar en móvil.
  */
 function DashboardHeader({ titulo, onNuevoMovimiento, onToggleSidebar }) {
@@ -38,7 +38,7 @@ function DashboardHeader({ titulo, onNuevoMovimiento, onToggleSidebar }) {
           <line x1="12" y1="5" x2="12" y2="19" />
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
-        <span>Nueva mov.</span>
+        <span className="dashboard-header__btn-nuevo-label">Nuevo movimiento</span>
       </button>
     </header>
   )

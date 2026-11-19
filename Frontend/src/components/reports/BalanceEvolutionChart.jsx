@@ -141,7 +141,7 @@ function BalanceEvolutionChart({ evolucionDatos }) {
                   x={paddingLeft - 8}
                   y={y + 4}
                   textAnchor="end"
-                  fill="#94a3b8"
+                  fill="#86b3bf"
                   fontSize="10"
                 >
                   {formatearMoneda(valorEje)}
@@ -169,7 +169,7 @@ function BalanceEvolutionChart({ evolucionDatos }) {
           <path
             d={pathD}
             fill="none"
-            stroke="#3b82f6"
+            stroke="#28afcb"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -189,8 +189,8 @@ function BalanceEvolutionChart({ evolucionDatos }) {
                   cx={pt.x}
                   cy={pt.y}
                   r={isHovered ? 7 : 4.5}
-                  fill={pt.balanceAcumulado >= 0 ? '#22c55e' : '#ef4444'}
-                  stroke="#1e293b"
+                  fill={pt.balanceAcumulado >= 0 ? '#2dd4a7' : '#ff3d8e'}
+                  stroke="#052430"
                   strokeWidth="2"
                 />
 
@@ -199,7 +199,7 @@ function BalanceEvolutionChart({ evolucionDatos }) {
                   x={pt.x}
                   y={svgHeight - 12}
                   textAnchor="middle"
-                  fill={isHovered ? '#f1f5f9' : '#94a3b8'}
+                  fill={isHovered ? '#f2fafc' : '#86b3bf'}
                   fontSize="11"
                   fontWeight={isHovered ? 'bold' : 'normal'}
                 >
@@ -211,8 +211,8 @@ function BalanceEvolutionChart({ evolucionDatos }) {
 
           <defs>
             <linearGradient id="balanceGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.4" />
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+              <stop offset="0%" stopColor="#28afcb" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#28afcb" stopOpacity="0" />
             </linearGradient>
           </defs>
         </svg>

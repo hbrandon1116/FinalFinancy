@@ -1,17 +1,17 @@
 import { formatearMoneda } from '../../utils/format'
 
-/** Paleta de colores temáticos para las categorías */
+/** Paleta de colores temáticos para las categorías (familia cian/petróleo/magenta) */
 const COLORES_CATEGORIAS = [
-  '#3b82f6', // Azul
-  '#f59e0b', // Naranja/Ámbar
-  '#10b981', // Esmeralda
-  '#8b5cf6', // Violeta
-  '#ec4899', // Rosa
-  '#06b6d4', // Cian
-  '#f97316', // Naranja intenso
-  '#6366f1', // Índigo
-  '#14b8a6', // Teal
-  '#a855f7', // Púrpura
+  '#28afcb', // Cian vibrante
+  '#ff3d8e', // Magenta de acento
+  '#5acbe2', // Cian claro
+  '#ff7ab2', // Magenta claro
+  '#1b93ad', // Cian profundo
+  '#c42a6c', // Magenta profundo
+  '#7dddea', // Cian muy claro
+  '#ffa8c8', // Magenta pastel
+  '#0f6e86', // Petróleo medio
+  '#e85c97', // Rosa magenta
 ]
 
 /**

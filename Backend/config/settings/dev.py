@@ -1,4 +1,4 @@
-"""Development settings for FinanzasPro."""
+"""Development settings for FinalFinancy."""
 
 from .base import *  # noqa: F401,F403
 from .base import env_bool, env_list

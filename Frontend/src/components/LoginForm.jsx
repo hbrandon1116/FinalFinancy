@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 /**
  * LoginForm
  *
- * Formulario de inicio de sesión de FinanzasPro.
+ * Formulario de inicio de sesión de FinalFinancy.
  * Maneja el estado local de los campos, validaciones en tiempo real
  * y estados de carga y deshabilitado.
  *
