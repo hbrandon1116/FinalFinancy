@@ -3694,14 +3694,27 @@ input {
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
+    padding: 1.25rem 1rem;
   }
 
   .rule-card__header {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
     gap: 0.5rem var(--space-2);
     align-items: center;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .rule-card__title-group,
+  .rule-card__pct-real-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .rule-card__title-group,
@@ -3712,6 +3725,7 @@ input {
   .rule-card__title {
     grid-column: 1;
     grid-row: 1;
+    font-size: 1.05rem;
     word-break: normal;
     overflow-wrap: normal;
     white-space: nowrap;
@@ -3723,11 +3737,14 @@ input {
     justify-self: end;
     flex-shrink: 0;
     white-space: nowrap;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.45rem;
   }
 
   .rule-card__pct-real {
     grid-column: 1;
     grid-row: 2;
+    font-size: 1.5rem;
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -3735,6 +3752,7 @@ input {
   .rule-card__pct-ideal {
     grid-column: 2;
     grid-row: 2;
+    font-size: 0.78rem;
     white-space: nowrap;
     text-align: right;
   }
