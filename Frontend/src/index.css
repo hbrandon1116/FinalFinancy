@@ -3696,6 +3696,49 @@ input {
     box-sizing: border-box;
   }
 
+  .rule-card__header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 0.5rem var(--space-2);
+    align-items: center;
+  }
+
+  .rule-card__title-group,
+  .rule-card__pct-real-wrapper {
+    display: contents;
+  }
+
+  .rule-card__title {
+    grid-column: 1;
+    grid-row: 1;
+    word-break: normal;
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+
+  .rule-card__diff-badge {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .rule-card__pct-real {
+    grid-column: 1;
+    grid-row: 2;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .rule-card__pct-ideal {
+    grid-column: 2;
+    grid-row: 2;
+    white-space: nowrap;
+    text-align: right;
+  }
+
   .rule-card__header,
   .rule-card__title-group,
   .rule-card__pct-real-wrapper,
@@ -3709,13 +3752,17 @@ input {
     row-gap: var(--space-2);
   }
 
-  .rule-card__title,
-  .rule-card__pct-real,
   .rule-card__val-amount,
-  .rule-card__val-amount--target,
-  .rule-card__description {
-    overflow-wrap: break-word;
-    word-break: break-word;
+  .rule-card__val-amount--target {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  /* Objetivo ideal con la misma alineación izquierda que monto real. */
+  .rule-card__val-item--right {
+    align-items: flex-start;
+    text-align: left;
   }
 
   .rule-card__val-amount {
