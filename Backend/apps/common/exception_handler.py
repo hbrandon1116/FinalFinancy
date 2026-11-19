@@ -17,12 +17,22 @@ logger = logging.getLogger(__name__)
 
 _MESSAGES = {
     "validation_error": "Los datos enviados no son válidos.",
+    "idempotency_key_required": "El header Idempotency-Key es obligatorio.",
+    "invalid_idempotency_key": "El header Idempotency-Key no es válido.",
+    "reauth_failed": "La contraseña actual no coincide.",
     "authentication_required": "Se requiere autenticación.",
     "invalid_credentials": "Correo o contraseña incorrectos.",
     "invalid_token": "El token no es válido o ha expirado.",
     "permission_denied": "No tiene permiso para realizar esta acción.",
+    "csrf_failed": "La verificación CSRF falló.",
     "not_found": "Recurso no encontrado.",
     "method_not_allowed": "Método HTTP no permitido.",
+    "duplicate_resource": "Ya existe un recurso con esos datos.",
+    "resource_in_use": "El recurso está en uso y no puede modificarse.",
+    "archived_goal": "La meta de ahorro está archivada.",
+    "idempotency_conflict": (
+        "La clave de idempotencia ya fue utilizada con otros datos."
+    ),
     "throttled": "Límite de peticiones excedido.",
     "server_error": "Error interno del servidor.",
 }
@@ -35,14 +45,29 @@ def _request_id(request) -> str:
     return f"req_{uuid.uuid4().hex}"
 
 
+def _declared_error_code(exc: Exception):
+    """Return a documented code declared on the detail or class, if any."""
+    detail = getattr(exc, "detail", None)
+    detail_code = getattr(detail, "code", None)
+    if detail_code in _MESSAGES:
+        return detail_code
+
+    default_code = getattr(exc, "default_code", None)
+    if default_code in _MESSAGES:
+        return default_code
+
+    return None
+
+
 def _error_code(exc: Exception) -> str:
+    """Return the contract code declared by the exception when it is known."""
+    declared_code = _declared_error_code(exc)
+    if declared_code:
+        return declared_code
+
     if isinstance(exc, exceptions.NotAuthenticated):
         return "authentication_required"
     if isinstance(exc, exceptions.AuthenticationFailed):
-        # Authentication views can use a custom code such as invalid_credentials.
-        default_code = getattr(exc, "default_code", None)
-        if default_code in {"invalid_credentials", "invalid_token"}:
-            return default_code
         return "invalid_token"
     if isinstance(exc, exceptions.PermissionDenied):
         return "permission_denied"
@@ -56,7 +81,7 @@ def _error_code(exc: Exception) -> str:
         return "validation_error"
     if isinstance(exc, exceptions.UnsupportedMediaType):
         return "validation_error"
-    return getattr(exc, "default_code", "server_error") or "server_error"
+    return getattr(exc, "default_code", None) or "server_error"
 
 
 def _details(data):

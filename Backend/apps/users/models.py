@@ -8,6 +8,7 @@ authentication flow is implemented.
 import uuid
 
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
@@ -51,19 +52,31 @@ class User(AbstractUser):
                 name="users_user_email_lower_uniq",
             ),
             models.CheckConstraint(
-                check=Q(email=Lower("email")),
+                condition=Q(email=Lower("email")),
                 name="users_user_email_lower_check",
             ),
             models.CheckConstraint(
-                check=Q(terms_accepted_at__isnull=False) | Q(is_staff=True),
+                # At least two characters after trimming: the first and last
+                # characters must be non-whitespace. This also rejects empty,
+                # whitespace-only and one-character values.
+                condition=Q(full_name__isnull=False)
+                & Q(
+                    full_name__regex=(
+                        r"^[^[:space:]].*[^[:space:]]$"
+                    )
+                ),
+                name="users_user_full_name_valid",
+            ),
+            models.CheckConstraint(
+                condition=Q(terms_accepted_at__isnull=False) | Q(is_staff=True),
                 name="users_user_terms_required",
             ),
             models.CheckConstraint(
-                check=Q(anonymized_at__isnull=True) | Q(is_active=False),
+                condition=Q(anonymized_at__isnull=True) | Q(is_active=False),
                 name="users_user_anonymized_inactive",
             ),
             models.CheckConstraint(
-                check=Q(anonymized_at__isnull=True)
+                condition=Q(anonymized_at__isnull=True)
                 | Q(deactivated_at__isnull=False),
                 name="users_user_anonymized_deactivated",
             ),
@@ -71,6 +84,26 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return self.email
+
+    @staticmethod
+    def _strip_full_name(value):
+        return value.strip() if isinstance(value, str) else value
+
+    def clean(self):
+        super().clean()
+        self.full_name = self._strip_full_name(self.full_name)
+        if not isinstance(self.full_name, str) or len(self.full_name) < 2:
+            raise ValidationError(
+                {
+                    "full_name": (
+                        "El nombre completo debe tener al menos 2 caracteres."
+                    )
+                }
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_name = self._strip_full_name(self.full_name)
+        super().save(*args, **kwargs)
 
     def get_full_name(self) -> str:
         return self.full_name

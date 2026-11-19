@@ -60,19 +60,25 @@ Variables principales:
 
 | Variable | Uso |
 | --- | --- |
-| `DJANGO_SECRET_KEY` | Clave de Django. Obligatoria en producción. |
+| `DJANGO_SECRET_KEY` | Clave de Django. Obligatoria en producción; mínimo 32 caracteres y sin placeholders. |
 | `DJANGO_DEBUG` | `true` solo en desarrollo. |
 | `DJANGO_ALLOWED_HOSTS` | Hosts permitidos, separados por coma. |
-| `DATABASE_URL` | URL de PostgreSQL. |
+| `DATABASE_URL` | URL de PostgreSQL. Obligatoria en producción. |
 | `DATABASE_CONN_MAX_AGE` | Reutilización de conexiones; por defecto 60 s. |
-| `CORS_ALLOWED_ORIGINS` | Orígenes del frontend permitidos. |
-| `CSRF_TRUSTED_ORIGINS` | Orígenes de confianza para CSRF. |
+| `CORS_ALLOWED_ORIGINS` | Orígenes exactos del frontend. Obligatoria en producción, sin comodines ni barra final. |
+| `CSRF_TRUSTED_ORIGINS` | Orígenes de confianza para CSRF. Obligatoria en producción, sin comodines ni barra final. |
+| `CSRF_COOKIE_SAMESITE` | `Lax` o `None`; debe ser compatible con los dominios y HTTPS. |
 | `JWT_ACCESS_TOKEN_LIFETIME` | Duración del access token, en minutos. |
 | `JWT_REFRESH_TOKEN_LIFETIME` | Duración del refresh token, en días. |
 | `JWT_SIGNING_KEY` | Opcional; por defecto usa `DJANGO_SECRET_KEY`. |
 | `REFRESH_COOKIE_SECURE` | Debe ser `true` en producción. |
 | `REFRESH_COOKIE_SAMESITE` | `Lax` o `None` según el despliegue. |
 | `IDEMPOTENCY_TTL_HOURS` | Ventana de idempotencia; por defecto 24 h. |
+
+En producción, `prod.py` detiene el arranque si `DJANGO_SECRET_KEY`,
+`DATABASE_URL`, `CORS_ALLOWED_ORIGINS` o `CSRF_TRUSTED_ORIGINS` faltan o no
+cumplen el formato anterior. No uses valores reales en este README ni en
+`.env.example`.
 
 `DATABASE_URL` debe tener el formato:
 
@@ -174,6 +180,10 @@ Cada app contiene la estructura para sus futuros `models.py`, `serializers.py`,
 ## 8. Seguridad y alcance
 
 - SimpleJWT está instalado y configurado como autenticación predeterminada.
+- En producción, el arranque falla si faltan o son inseguros
+  `DJANGO_SECRET_KEY`, `DATABASE_URL`, `CORS_ALLOWED_ORIGINS` o
+  `CSRF_TRUSTED_ORIGINS`. Los orígenes deben ser exactos, sin comodines ni
+  barra final.
 - **La autenticación por cookies HttpOnly + CSRF no está implementada todavía**;
   solo quedaron sus ajustes preparados. Se implementará en la fase 2.
 - Los endpoints de registro, login, refresh y logout no existen aún.
