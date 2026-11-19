@@ -3680,6 +3680,49 @@ input {
   border: 1px solid var(--color-border);
 }
 
+/* ==========================================================================
+   AJUSTES EXCLUSIVOS DE ESCRITORIO — Reportes / Regla 50-30-20
+   (No altera tablet ni móvil: se aíslan con min-width.)
+   ========================================================================== */
+@media (min-width: 1201px) {
+  .rule-503020-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+
+  .rule-card {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .rule-card__header,
+  .rule-card__title-group,
+  .rule-card__pct-real-wrapper,
+  .rule-card__values,
+  .rule-card__val-item {
+    min-width: 0;
+  }
+
+  .rule-card__values {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+
+  .rule-card__title,
+  .rule-card__pct-real,
+  .rule-card__val-amount,
+  .rule-card__val-amount--target,
+  .rule-card__description {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .rule-card__val-amount {
+    font-size: 0.875rem;
+  }
+}
+
 /* Responsive para Reportes */
 @media (max-width: 1200px) {
   .reports-page__summary {
