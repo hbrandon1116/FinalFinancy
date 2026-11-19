@@ -1,24 +1,33 @@
 # Arquitectura del backend — FinanzasPro
 
-> Estado: **arquitectura oficial del MVP, pendiente de implementación**. No se
-> implementaron modelos Django, no se instalaron dependencias y no se modificó el
-> frontend.
+> Estado: **arquitectura vigente del MVP; implementación por fases en curso**.
+> La base técnica (proyecto Django, settings por entorno, `User`, modelos base y
+> manejador global de errores) está implementada. Las entidades financieras, los
+> endpoints de negocio y las migraciones todavía no existen. La suite actual
+> tiene 29 pruebas exitosas, todas sin acceso a base de datos.
 > Documentos relacionados: [diseño de base de datos](./database-design.md),
 > [contrato de API](./api-contract.md) y [reglas de negocio](./business-rules.md).
 > Las decisiones de esos documentos son la referencia canónica.
 
-## 1. Punto de partida inspeccionado
+## 1. Estado actual inspeccionado
 
 | Elemento | Estado actual |
 | --- | --- |
-| `Backend/` | Vacío; no existe proyecto Django, `manage.py`, settings ni migraciones. |
+| `Backend/` | Proyecto Django 5.2 + Django REST Framework existente, con `manage.py`, settings separados (`base`, `dev`, `test`, `prod`), dependencias fijadas y estructura por apps. |
+| Modelos implementados | `users.User` y los modelos abstractos `UUIDModel`, `TimeStampedModel` y `BaseModel`. No existen modelos financieros concretos. |
+| Migraciones | No se generó ni aplicó ninguna migración. Las carpetas `migrations/` solo contienen `__init__.py`; por tanto, las tablas descritas en el diseño no están creadas por este repositorio. |
+| `full_name` | La restricción `users_user_full_name_valid` está declarada en el modelo `User`; todavía no está aplicada físicamente en PostgreSQL porque no existe una migración. |
+| Autenticación | SimpleJWT está configurado (rotación, blacklist y duración), pero las vistas de registro/login/refresh/logout, las cookies `HttpOnly` y la aplicación de CSRF están pendientes. |
+| API | `config/urls.py` monta `/api/v1/` y las apps tienen sus módulos `urls.py`, pero todos los `urlpatterns` de negocio están vacíos. No hay endpoints implementados. |
+| Errores | `apps/common/exception_handler.py` está implementado y normaliza los errores; conserva los códigos de contrato declarados por las excepciones. |
+| Tests | 29 pruebas exitosas: 12 de `User`, 8 del manejador de errores, 3 de modelos base y 6 de configuración. Son `SimpleTestCase`; no prueban reglas financieras ni endpoints. |
 | Frontend | React 19 + Vite 8 + React Router 7. |
 | Módulos UI | Login, Registro, Dashboard, Movimientos, Presupuestos, Ahorro, Reportes y Ajustes. |
 | Estado del frontend | Contextos en memoria (`MovimientosContext`, `PresupuestosContext`, `AhorroContext`). |
 | Datos | `src/data/mockData.js` con movimientos, categorías, presupuestos y metas simuladas. |
 | Comunicación | `src/services/api.js` es un placeholder; `request()` lanza «API no conectada». |
 | URL base actual | `http://localhost:8000/api` (sin versión). |
-| Autenticación | Formularios simulados; no hay JWT ni protección de rutas. |
+| Autenticación del frontend | Formularios simulados; no hay JWT ni protección de rutas. |
 | Documentación existente | `Frontend/docs/documentacion-sprints.md` (sprints del frontend). |
 | Ahorro en el frontend | Los aportes viven dentro de `meta.aportes`; no son movimientos ni afectan gastos. |
 
@@ -42,6 +51,42 @@ Hallazgos relevantes para la integración:
 7. El frontend actual trunca el mes en Reportes; el backend oficial usa meses
    calendario completos, así que la integración deberá corregir ese límite.
 
+### 1.1 Clasificación del estado
+
+**Implementado en código**
+
+- Proyecto Django, settings `base`/`dev`/`test`/`prod`, PostgreSQL vía
+  `DATABASE_URL`, DRF, SimpleJWT, CORS y configuración de cookies.
+- Modelo `User` con email como login, `UserManager`, normalización de email,
+  validación y normalización de `full_name`, y constraints declaradas.
+- Modelos abstractos `UUIDModel`, `TimeStampedModel` y `BaseModel`; no crean
+  tablas por sí mismos.
+- Manejador global de excepciones con formato uniforme y códigos de contrato.
+- Paginación estándar (`page`/`page_size`, máximo 100) y rutas raíz `/api/v1/`.
+- Suite de 29 pruebas no-DB para modelo de usuario, modelos base, configuración
+  y errores.
+
+**Preparado, pero todavía no implementado**
+
+- Autenticación completa por JWT en cookie: emisión, rotación, revocación,
+  logout, CSRF y vistas de autenticación.
+- Endpoints y serializers de usuarios, categorías, movimientos, presupuestos,
+  metas, aportes, dashboard y reportes.
+- Servicios y selectores de negocio, reglas financieras y pruebas con base de
+  datos.
+- Idempotencia transaccional y modelo `IdempotencyRecord`.
+- Modelos financieros `Category`, `SavingsGoal`, `Movement` y `Budget`.
+- Migraciones. La primera migración del `User` debe generarse al iniciar la
+  fase 1; cada fase que cambie el esquema debe incluir la suya.
+
+**Pendiente de verificación operativa**
+
+- Generar y aplicar las migraciones en PostgreSQL/Supabase.
+- Verificar las variables de producción en Render y los orígenes exactos de
+  CORS/CSRF antes del despliegue.
+- Ejecutar pruebas con base de datos real para constraints, transacciones e
+  idempotencia.
+
 ## 2. Objetivos y no objetivos
 
 ### Objetivos
@@ -56,11 +101,12 @@ Hallazgos relevantes para la integración:
 - Contrato JSON estable y documentado para conectar el frontend.
 - Camino de implementación por fases, con tests de las reglas críticas.
 
-### No objetivos de esta etapa
+### No objetivos de esta actualización documental
 
-- Implementar los modelos o migraciones.
-- Modificar el frontend.
-- Instalar paquetes.
+- Implementar los modelos financieros o generar migraciones.
+- Modificar código Python, rutas o reglas financieras.
+- Modificar el frontend o conectar la API real.
+- Conectar, migrar o modificar Supabase.
 - Diseñar el despliegue definitivo.
 - Implementar funcionalidades fuera del MVP: retiros de ahorro, cuentas
   bancarias, saldos iniciales, cambio de correo, recuperación/verificación de
@@ -104,32 +150,33 @@ flowchart LR
    `UNIQUE (user_id, idempotency_key)`, evita duplicados y reproduce la respuesta
    original; no existe una fila de estado intermedio.
 
-## 4. Stack propuesto
+## 4. Stack actual
 
-| Componente | Propuesta | Estado |
+| Componente | Versión / decisión | Estado |
 | --- | --- | --- |
-| Lenguaje | Python 3.12+ | Por instalar. |
-| Framework | Django 5.2 LTS | No instalado. |
-| API | Django REST Framework | No instalado. |
-| Autenticación | `djangorestframework-simplejwt` + blacklist | No instalado. |
-| Driver PostgreSQL | `psycopg` 3 | No instalado. |
-| CORS | `django-cors-headers` | No instalado. |
-| Base de datos | PostgreSQL 15+ | No provisionada. |
+| Lenguaje | Python 3.12+ | Instalado y verificado en el entorno local (3.14.3). |
+| Framework | Django 5.2 LTS (`5.2.19`) | Instalado y configurado. |
+| API | Django REST Framework `3.18.3` | Instalado y configurado. |
+| Autenticación | `djangorestframework-simplejwt` `5.5.1` + blacklist | Instalado; settings aplicados; endpoints pendientes. |
+| Driver PostgreSQL | `psycopg[binary]` `3.3.9` | Instalado. |
+| Base de datos | PostgreSQL 15+; Supabase como destino de despliegue | Configurada por `DATABASE_URL`; sin migraciones ejecutadas desde este repositorio. |
+| CORS | `django-cors-headers` `4.9.0` | Instalado y configurado. |
+| Servidor WSGI | Gunicorn `25.1.0` | Instalado para producción. |
 | OpenAPI | `drf-spectacular` (opcional) | No instalado. |
-| Tests | `django.test.TestCase` + `APIClient` (sin dependencia extra) | — |
+| Tests | Runner de Django (`SimpleTestCase`/`TestCase` + `APIClient`) | 29 pruebas no-DB existentes; sin dependencia extra. |
 | Lint/formato | Ruff (opcional) | No instalado. |
 
-No se debe añadir ninguna dependencia hasta iniciar la implementación. Las
-decisiones de producto y seguridad ya están cerradas en los documentos; las
-únicas definiciones abiertas son las de cumplimiento de §14 y no bloquean el
-desarrollo del MVP.
+Las dependencias están fijadas en `Backend/requirements.txt`. Las decisiones de
+producto y seguridad ya están cerradas en los documentos; las únicas
+definiciones abiertas son las de cumplimiento de §14 y no bloquean el desarrollo
+del MVP. No se añaden paquetes como parte de esta actualización documental.
 
-## 5. Estructura propuesta del backend
+## 5. Estructura actual del backend
 
 ```text
 Backend/
 ├── manage.py
-├── requirements.txt              # o pyproject.toml; aún no existe
+├── requirements.txt              # dependencias fijadas
 ├── .env.example                  # variables, sin secretos reales
 ├── README.md
 ├── config/
@@ -146,68 +193,74 @@ Backend/
 ├── apps/
 │   ├── __init__.py
 │   ├── common/
-│   │   ├── models.py             # UUIDModel, TimeStampedModel, IdempotencyRecord
-│   │   ├── exceptions.py         # errores de dominio
-│   │   ├── exception_handler.py  # JSON de error uniforme
-│   │   ├── idempotency.py        # replay/conflicto de Idempotency-Key
-│   │   ├── pagination.py
-│   │   ├── permissions.py        # IsOwner / scoping
-│   │   ├── mixins.py             # UserScopedQuerySetMixin
-│   │   ├── validators.py         # montos, periodos, fechas
+│   │   ├── models.py             # UUIDModel, TimeStampedModel, BaseModel (abstractos)
+│   │   ├── exceptions.py         # errores de dominio (scaffolding)
+│   │   ├── exception_handler.py  # JSON de error uniforme (implementado)
+│   │   ├── idempotency.py        # replay/conflicto de Idempotency-Key (fase 4)
+│   │   ├── pagination.py          # paginación estándar implementada
+│   │   ├── permissions.py        # IsOwner / scoping (scaffolding)
+│   │   ├── mixins.py             # UserScopedQuerySetMixin (scaffolding)
+│   │   ├── validators.py         # montos, periodos, fechas (scaffolding)
 │   │   └── tests/
 │   ├── users/
-│   │   ├── models.py             # User personalizado
-│   │   ├── managers.py
-│   │   ├── serializers.py
-│   │   ├── views.py
-│   │   ├── urls.py
-│   │   ├── services.py           # registro, términos, baja, cambio de contraseña
-│   │   ├── tokens.py             # cookies HttpOnly + CSRF
-│   │   ├── migrations/
+│   │   ├── models.py             # User personalizado (implementado)
+│   │   ├── managers.py           # UserManager (implementado)
+│   │   ├── serializers.py        # scaffolding
+│   │   ├── views.py              # scaffolding
+│   │   ├── urls.py               # urlpatterns vacío
+│   │   ├── services.py           # scaffolding; fase 1-2
+│   │   ├── tokens.py             # scaffolding; fase 1-2
+│   │   ├── migrations/           # solo __init__.py; ninguna migración
 │   │   └── tests/
 │   ├── categories/
-│   │   ├── models.py
+│   │   ├── models.py             # scaffolding; fase 2
 │   │   ├── serializers.py
 │   │   ├── views.py
 │   │   ├── urls.py
 │   │   ├── services.py
-│   │   ├── migrations/
+│   │   ├── migrations/           # solo __init__.py; ninguna migración
 │   │   └── tests/
 │   ├── movements/
-│   │   ├── models.py             # Movement
+│   │   ├── models.py             # scaffolding; fase 4
 │   │   ├── serializers.py
 │   │   ├── views.py
-│   │   ├── urls.py
+│   │   ├── urls.py               # urlpatterns vacío
 │   │   ├── services.py           # crear/editar/borrar movimientos
 │   │   ├── selectors.py          # listados y totales
-│   │   ├── migrations/
+│   │   ├── migrations/           # solo __init__.py; ninguna migración
 │   │   └── tests/
 │   ├── budgets/
-│   │   ├── models.py             # Budget
+│   │   ├── models.py             # scaffolding; fase 5
 │   │   ├── serializers.py
 │   │   ├── views.py
-│   │   ├── urls.py
+│   │   ├── urls.py               # urlpatterns vacío
 │   │   ├── services.py
 │   │   ├── selectors.py          # consumo y resumen
-│   │   ├── migrations/
+│   │   ├── migrations/           # solo __init__.py; ninguna migración
 │   │   └── tests/
 │   ├── savings/
-│   │   ├── models.py             # SavingsGoal
+│   │   ├── models.py             # scaffolding; fase 3
 │   │   ├── serializers.py
 │   │   ├── views.py
-│   │   ├── urls.py
+│   │   ├── urls.py               # urlpatterns vacío
 │   │   ├── services.py           # metas y aportes
 │   │   ├── selectors.py          # progreso y resumen
-│   │   ├── migrations/
+│   │   ├── migrations/           # solo __init__.py; ninguna migración
 │   │   └── tests/
 │   └── analytics/
+│       ├── models.py             # sin modelos
 │       ├── views.py              # dashboard y reportes (solo lectura)
-│       ├── urls.py
+│       ├── urls.py               # urlpatterns vacío
 │       ├── serializers.py        # forma de salida
 │       ├── selectors.py          # agregaciones por rango
 │       └── tests/
-└── docs/                         # opcional; la documentación vive en /docs/backend
+└── (la documentación oficial vive en /docs/backend, fuera de Backend/)
 ```
+
+Los módulos con «scaffolding» contienen docstrings y firmas mínimas, no lógica
+de negocio. Ninguna carpeta `migrations/` tiene archivos de migración; solo el
+`__init__.py` que la marca como paquete. Por eso ninguna tabla del diseño existe
+todavía en PostgreSQL.
 
 ### 5.1 Responsabilidad de cada app
 
@@ -221,27 +274,26 @@ Backend/
 | `analytics` | Dashboard y reportes; sin escritura. | Ninguno |
 | `common` | Base abstracta, idempotencia, permisos, paginación, errores y validadores. | `IdempotencyRecord` |
 
-### 5.2 Dependencias entre apps
+### 5.2 Dependencias y orden entre apps
 
 ```text
-users
-  ↑
-categories
-  ↑
-savings        (SavingsGoal necesita User)
-  ↑
-movements      (Movement referencia Category y SavingsGoal)
-  ↑
-budgets        (Budget referencia Category)
-  ↑
-analytics      (lee todos los modelos)
+users                         (User; base de todas las relaciones)
+categories                    -> users
+savings                       -> users
+movements                     -> users, categories, savings
+budgets                       -> users, categories
+                                 (el consumo de lectura usa movements)
+common.IdempotencyRecord      -> users (infraestructura; sin FK a Movement)
+analytics                     -> todos los modelos anteriores (solo lectura)
 ```
 
 La dependencia no es simétrica entre modelos y servicios:
 
 - **Modelos:** `Movement` referencia `Category` y `SavingsGoal`; `Budget`
-  referencia `Category`; `SavingsGoal` referencia `User`. Por eso
-  `movements`/`budgets` dependen de modelos de `categories`/`savings`.
+  referencia `Category`; `SavingsGoal` referencia `User`. Por eso `movements`
+  depende de modelos de `categories`/`savings`, y `budgets` depende de
+  `categories`. `IdempotencyRecord` depende solo de `User`; no tiene FK a
+  `Movement`.
 - **Servicios:** `savings.services` llama a `movements.services` para persistir
   el aporte. `movements.services` **no** importa `savings.services`.
 - El ciclo se rompe con referencias por string (`"savings.SavingsGoal"`,
@@ -250,6 +302,23 @@ La dependencia no es simétrica entre modelos y servicios:
   `movements.models`.
 - `analytics` solo importa modelos y selectores; nunca es importado por las apps
   de escritura.
+
+**Secuencia de implementación y migraciones**
+
+| Orden | Modelo / entregable | Dependencia | Migración |
+| --- | --- | --- | --- |
+| 1 | `User` + modelos base | Ninguna; los bases son abstractos y no crean tablas. | Primera migración de `users`; debe existir antes de cualquier tabla financiera. |
+| 2 | `Category` | `User`. | Migración de `categories` posterior a `users`. |
+| 3 | `SavingsGoal` | `User`. | Migración de `savings` posterior a `users`. |
+| 4 | `Movement` + `IdempotencyRecord` | `Category`, `SavingsGoal` y `User`; la idempotencia se apoya en `User` y se usa en la misma transacción que `Movement`. | Migraciones de `movements` y `common`, después de categorías y metas. |
+| 5 | `Budget` | `Category` para el esquema; `Movement` para calcular consumo. Aunque no tiene FK a `Movement`, se implementa después para probar sus selectores y totales. | Migración de `budgets` posterior a `categories`. |
+| 6 | Aportes a metas | `Movement` y `SavingsGoal`. No crea una tabla de aportes. | Normalmente no requiere migración nueva; solo si se añaden índices o constraints. |
+| 7 | Analítica, dashboard y reportes | Todos los modelos anteriores. No crea modelos. | Sin migración. |
+
+La autenticación JWT/cookies/CSRF es transversal a las fases 1–7: debe estar
+operativa antes de exponer endpoints financieros. Sus settings ya existen, pero
+las vistas y las cookies todavía no. El registro que crea categorías
+predeterminadas se cierra cuando `Category` existe (fase 2).
 
 ## 6. Servicios y selectores
 
@@ -277,6 +346,9 @@ Los servicios reciben siempre `user` como argumento, nunca toman un `user_id` de
 payload. Las creaciones financieras reciben además `idempotency_key`; el servicio
 de idempotencia verifica la propiedad del registro y que el fingerprint coincida.
 Devuelven instancias de modelo o lanzan errores de dominio.
+
+**Estado:** esta tabla es el contrato de diseño de los servicios; ninguno está
+implementado todavía. Los módulos actuales son scaffolding sin lógica de negocio.
 
 ### 6.2 Selectores de lectura
 
@@ -378,7 +450,7 @@ fila. El flujo de `POST /movements/` es equivalente, con callback
 | `/savings-goals/*` | `savings` + `movements` + `common.idempotency`; los aportes son el único canal de `savings_transfer` |
 | `/dashboard/*`, `/reports/*` | `analytics` |
 
-## 8. Configuración Django propuesta
+## 8. Configuración Django actual
 
 ### 8.1 Settings
 
@@ -408,7 +480,14 @@ fila. El flujo de `POST /movements/` es equivalente, con callback
 | `REFRESH_COOKIE_*` | Configuración propia | `HttpOnly`, `Secure`, `SameSite`, `Path` y edad. |
 | `IDEMPOTENCY_TTL_HOURS` | `24` | Expiración de claves de idempotencia. |
 
+Los valores comunes ya están aplicados en `config/settings/base.py`; `prod.py`
+valida los secretos y orígenes críticos y activa HTTPS/HSTS/cookies seguras. La
+emisión y validación de cookies de autenticación sigue pendiente.
+
 ### 8.2 JWT
+
+La configuración siguiente ya está aplicada en `base.py`; las vistas que emiten,
+rotan y revocan tokens todavía no existen.
 
 ```python
 SIMPLE_JWT = {
@@ -457,12 +536,20 @@ CSRF_TRUSTED_ORIGINS=http://localhost:5173
 JWT_SIGNING_KEY=
 REFRESH_COOKIE_SECURE=false
 REFRESH_COOKIE_SAMESITE=Lax
+CSRF_COOKIE_SAMESITE=Lax
 IDEMPOTENCY_TTL_HOURS=24
 ```
 
 `REFRESH_COOKIE_SECURE` debe ser `true` en producción. Si frontend y API están
 en sitios distintos, `REFRESH_COOKIE_SAMESITE=None` exige HTTPS. No se debe
 versionar `.env`. Se versiona `.env.example` sin secretos.
+
+En producción, `config/settings/prod.py` exige `DJANGO_SECRET_KEY` (mínimo 32
+caracteres y sin placeholders), `DATABASE_URL` con esquema PostgreSQL y host/base
+válidos, `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` y
+`CSRF_TRUSTED_ORIGINS`. Los orígenes deben ser exactos: no se admiten comodines,
+credenciales, rutas ni barra final. El arranque falla de forma explícita si falta
+un valor o no cumple el formato; los valores no se registran en logs.
 
 ## 9. Seguridad
 
@@ -552,21 +639,27 @@ versionar `.env`. Se versiona `.env.example` sin secretos.
 
 ### 9.5 Errores consistentes
 
-Un `exception_handler` de DRF transforma:
+El `exception_handler` global ya está implementado en
+`apps/common/exception_handler.py` y transforma:
 
 - errores de serializers → `validation_error` con `details` por campo;
 - `NotFound` → `not_found`;
-- `PermissionDenied` → `permission_denied`;
+- `PermissionDenied` → `permission_denied`, salvo que la excepción declare un
+  código de contrato como `csrf_failed`;
 - `AuthenticationFailed`/token inválido → `authentication_required`,
   `invalid_token` o `invalid_credentials`;
 - CSRF inválido en refresh/logout → `403 csrf_failed`;
 - contraseña actual incorrecta → `400 reauth_failed`;
 - errores de dominio (`DuplicateResource`, `ResourceInUse`, `ArchivedGoal`) →
-  `409` con su código;
+  `409 duplicate_resource`, `409 resource_in_use` y `409 archived_goal`;
 - idempotencia: `400 idempotency_key_required`/`invalid_idempotency_key`,
   `409 idempotency_conflict`;
 - excepciones no controladas → `500 server_error` con `request_id`, sin stack
-  trace en la respuesta.
+  trace ni mensaje interno en la respuesta.
+
+Los códigos declarados por una excepción (`code=` o `default_code`) tienen
+prioridad sobre el mapeo genérico por tipo. El handler está cubierto por 8
+pruebas; los errores de endpoint reales se añadirán en las fases de negocio.
 
 Los endpoints de autenticación también usan este formato, no el `detail` por
 defecto de SimpleJWT.
@@ -592,7 +685,24 @@ defecto de SimpleJWT.
 
 ## 11. Testing
 
-### 11.1 Niveles
+### 11.1 Estado actual
+
+La suite actual tiene **29 pruebas exitosas**, ejecutadas con
+`SimpleTestCase`; no requieren base de datos y el runner omite la creación de la
+base de test. Cubren:
+
+- 12 pruebas de `User`: email como login, manager, nombre completo y declaración
+  de la constraint;
+- 8 pruebas del manejador centralizado: 400, 401, 403, 409,
+  `duplicate_resource` y redacción de errores 500;
+- 3 pruebas de los modelos base abstractos;
+- 6 pruebas de configuración: usuario, zona horaria, PostgreSQL, DRF, CORS y
+  SimpleJWT.
+
+No hay pruebas de endpoints, servicios financieros, migraciones ni constraints
+ejecutadas contra PostgreSQL.
+
+### 11.2 Niveles objetivo
 
 | Nivel | Herramienta | Qué prueba |
 | --- | --- | --- |
@@ -603,7 +713,7 @@ defecto de SimpleJWT.
 | Regresión financiera | Casos con `Decimal` | Que los aportes no contaminen gastos/presupuestos. |
 | Concurrencia | Transacciones controladas | Archivado vs aporte, presupuesto duplicado, misma `Idempotency-Key` en paralelo. |
 
-### 11.2 Casos mínimos
+### 11.3 Casos mínimos
 
 - Registro con y sin `accept_terms`, creación de categorías predeterminadas,
   login, refresh por cookie, logout y cambio de contraseña.
@@ -639,7 +749,9 @@ defecto de SimpleJWT.
 - Regla 50/30/20 excluye aportes de necesidades/deseos y los incluye en ahorro.
 - Importes serializados con dos decimales.
 
-No se implementan tests todavía; esta es la cobertura objetivo.
+Estos casos son la cobertura obligatoria de las fases 2–7. Todavía no están
+implementados; no deben documentarse como comportamiento probado hasta que
+existan modelos, migraciones y endpoints reales.
 
 ## 12. Estrategia de integración con el frontend
 
@@ -698,25 +810,33 @@ El frontend no se modifica en esta etapa. Cuando el backend esté listo:
 
 ## 13. Fases de implementación recomendadas
 
-| Fase | Entregable | Criterio de aceptación |
-| --- | --- | --- |
-| 0 | Revisión de decisiones oficiales y pendientes de cumplimiento de §14 | No hay bloqueos de diseño para el MVP. |
-| 1 | Proyecto Django + settings + PostgreSQL local | `manage.py check`, conexión y migración inicial. |
-| 2 | `User` personalizado + JWT en cookie + CSRF + términos + perfil | Registro/login/refresh/logout, categorías predeterminadas y tests de auth. |
-| 3 | `Category` + CRUD | Unicidad, propiedad, catálogo inicial y `PROTECT`. |
-| 4 | `Movement` + idempotencia + restricciones | Ingresos y gastos por `/movements/`; `Idempotency-Key`; check de forma; tests de gasto. El modelo admite transferencias, pero su endpoint se habilita en la fase 6. |
-| 5 | `Budget` + consumo | Duplicados, estados y exclusión de ahorro. |
-| 6 | `SavingsGoal` + aportes | Progreso derivado, `status` calculado, sobreahorro, archivo y aportes transaccionales por `/savings-goals/{id}/contributions/`. |
-| 7 | Dashboard + Reportes | Agregados reutilizados, meses completos y contrato completo. |
-| 8 | Baja de cuenta + OpenAPI + revisión de seguridad + adaptador frontend | Anonimización, documentación viva y primera integración. |
+La autenticación JWT/cookies/CSRF es transversal: debe completarse antes de
+exponer endpoints financieros. Los settings y la infraestructura ya existen; las
+vistas, cookies y servicios de cuenta siguen pendientes. No se cuenta como una
+fase de modelo separada.
 
-Cada fase debe incluir su migración, tests y actualización del contrato si cambia.
+| Fase | Entregable | Dependencia y migración | Criterio de aceptación |
+| --- | --- | --- | --- |
+| 0 | Línea base actual: proyecto Django, settings, `User`, modelos base, exception handler y suite no-DB | Ya completada; no hay migraciones. | `manage.py check` sin errores; 29 tests exitosos. |
+| 1 | Revisar y estabilizar `User` y los modelos base; primera migración del usuario | Ninguna dependencia de modelos financieros. Migración inicial de `users`; los modelos abstractos no crean tablas. | `User` con email, `full_name` normalizado, constraints declaradas y migración aplicada; sin tablas financieras todavía. |
+| 2 | `Category` + catálogo predeterminado + cierre del registro | Depende de `User`. Migración de `categories` posterior a `users`. El alta de usuario crea el catálogo en la misma transacción. | CRUD de categorías, unicidad, propiedad, `PROTECT` y catálogo inicial probados. |
+| 3 | `SavingsGoal` + CRUD y archivado | Depende de `User`. Migración de `savings` posterior a `users`. | Meta con progreso derivado, `status` calculado, archivo lógico y unicidad de metas activas; sin aportes todavía. |
+| 4 | `Movement` + `IdempotencyRecord` + ingresos/gastos | Depende de `Category`, `SavingsGoal` y `User`. Migraciones de `movements` y `common` después de categorías y metas. | `POST /movements/` solo crea `income`/`expense`, usa idempotencia y respeta la restricción de forma. El modelo admite transferencias, pero el endpoint de aportes se habilita en la fase 6. |
+| 5 | `Budget` + consumo mensual | Depende de `Category`; los selectores de consumo dependen de `Movement`. Migración de `budgets` posterior a `categories`. | Presupuestos únicos por usuario/categoría/mes, estados 80/100 y exclusión de ahorro probados. |
+| 6 | Aportes a metas | Depende de `Movement` y `SavingsGoal`. No crea tabla de aportes; solo migración si se añaden índices o constraints. | Único canal `POST /savings-goals/{id}/contributions/`; transferencia sin categoría, idempotente y transaccional; sobreahorro y archivo probados. |
+| 7 | Analítica, Dashboard y Reportes | Depende de todos los modelos y selectores anteriores. Sin migración. | Agregados reutilizados, meses calendario completos, 50/30/20 correcta y contrato de reportes probado. |
+| 8 | Cierre de seguridad, despliegue y adaptador frontend | Posterior a las fases 1–7; no cambia modelos financieros. | Variables de producción verificadas, migraciones aplicadas, OpenAPI si se adopta y frontend integrado. |
+
+Cada fase que cambie el esquema debe incluir su migración y sus pruebas. Las
+fases 6 y 7 no crean tablas; solo generan migración si añaden constraints o
+índices. En esta actualización documental no se generó ni aplicó ninguna
+migración.
 
 ## 14. Decisiones pendientes (no bloqueantes)
 
-El modelo, los endpoints, los cálculos y las decisiones de seguridad del MVP
-están cerrados. Quedan dos definiciones de cumplimiento que no impiden iniciar la
-implementación:
+El diseño del modelo, los endpoints, los cálculos y las decisiones de seguridad
+del MVP está cerrado. Quedan dos definiciones de cumplimiento que no impiden
+iniciar la implementación:
 
 1. **Versionado de términos y privacidad.** El MVP registra
    `terms_accepted_at`, pero no la versión aceptada. Si legal exige demostrar la
@@ -732,14 +852,18 @@ No hay decisiones pendientes sobre: moneda (COP), zona horaria
 categorías predeterminadas, sobreahorro, retiros (fuera del MVP), archivo de
 metas, periodos completos, base 50/30/20 sin ingresos ni baja de cuenta.
 
-## 15. Lo que no se ha hecho
+## 15. Lo que falta
 
-- No se creó ningún proyecto Django.
-- No se definieron modelos Python ni migraciones.
-- No se instalaron dependencias.
-- No se modificó ningún archivo del frontend.
-- No se conectó la base de datos.
-- No se eliminó ninguna funcionalidad existente.
+- Implementar los modelos financieros `Category`, `SavingsGoal`, `Movement`,
+  `Budget` e `IdempotencyRecord`.
+- Generar y aplicar las migraciones; la restricción de `full_name` y las demás
+  constraints no están físicamente en PostgreSQL hasta ese paso.
+- Implementar endpoints, serializers, servicios y selectores de negocio.
+- Completar la autenticación por JWT en cookie, CSRF y servicios de cuenta.
+- Implementar las reglas financieras y sus pruebas con base de datos.
+- Implementar dashboard, reportes e idempotencia transaccional.
+- Integrar el frontend y verificar el despliegue de producción.
 
-La documentación es la base para iniciar la implementación. Los pendientes de
-§14 son de cumplimiento y no bloquean el desarrollo del MVP.
+El frontend no se modificó y no se eliminó ninguna funcionalidad existente. La
+documentación es la base para iniciar la implementación. Los pendientes de §14
+son de cumplimiento y no bloquean el desarrollo del MVP.

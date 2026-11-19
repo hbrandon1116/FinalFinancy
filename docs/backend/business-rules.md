@@ -1,7 +1,11 @@
 # Reglas de negocio financieras — FinanzasPro
 
-> Estado: **reglas oficiales del MVP, pendientes de implementación**. Definen los
-> cálculos que deberán implementar los servicios y selectores del backend.
+> Estado: **reglas oficiales vigentes del MVP; implementación financiera
+> pendiente**. Este documento conserva las fórmulas y decisiones de negocio; no
+> implementa modelos ni servicios. Todavía no existen `Category`, `SavingsGoal`,
+> `Movement`, `Budget` ni `IdempotencyRecord`, no hay migraciones y los endpoints
+> financieros no están habilitados. Las constraints descritas son el objetivo de
+> diseño, no un esquema ya aplicado en PostgreSQL.
 > No modifican el frontend actual.
 > Entidades y campos canónicos: [diseño de base de datos](./database-design.md).
 
@@ -610,7 +614,13 @@ consumo de las categorías que tienen límite definido.
 
 ## 13. Invariantes y pruebas obligatorias
 
-El backend debe incluir tests que demuestren:
+**Estado actual de la suite:** hay 29 pruebas exitosas, todas sin base de datos.
+Cubren el modelo `User` (incluida la declaración de la constraint de
+`full_name`), los modelos abstractos, la configuración y el manejador de errores.
+No cubren ninguna de las reglas financieras de este documento.
+
+Los siguientes invariantes son la cobertura obligatoria de las fases 2–7 y
+todavía no están implementados. El backend deberá incluir tests que demuestren:
 
 1. `expense_total` solo suma `movement_type='expense'`.
 2. Crear un `savings_transfer` no modifica `expense_total`.

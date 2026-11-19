@@ -1,7 +1,10 @@
 # Contrato de API — FinanzasPro
 
-> Estado: **contrato oficial del MVP, pendiente de implementación**. No hay backend
-> implementado todavía.
+> Estado: **contrato oficial del MVP; implementación pendiente de endpoints**.
+> El proyecto Django, los settings, el modelo `User`, los modelos base y el
+> manejador global de errores ya existen. Ninguno de los endpoints de negocio
+> descritos aquí está implementado todavía: los `urlpatterns` de las apps están
+> vacíos y la autenticación por cookies/CSRF aún no está operativa.
 > Base URL local: `http://localhost:8000/api/v1`
 > Formato: JSON UTF-8. Autenticación: JWT Bearer para el access token y refresh
 > token en cookie `HttpOnly` (Django REST Framework + SimpleJWT).
@@ -131,9 +134,14 @@ Todos los errores usan la misma estructura, incluso los de validación:
 | 429 | `throttled` | Límite de peticiones excedido. |
 | 500 | `server_error` | Error no controlado; incluir `request_id`. |
 
-Los errores de validación de DRF (`{"field": [...]}`) deben mapearse al formato
-anterior mediante un `EXCEPTION_HANDLER` personalizado. Las respuestas 404 de
-recursos de otro usuario también usan `not_found`, para evitar enumeración.
+Los errores de validación de DRF (`{"field": [...]}`) se mapean al formato
+anterior mediante el `EXCEPTION_HANDLER` personalizado, ya implementado en
+`apps/common/exception_handler.py`. Las respuestas 404 de recursos de otro
+usuario también usan `not_found`, para evitar enumeración. El handler conserva
+los códigos declarados por la excepción (`code=` o `default_code`), incluidos
+`duplicate_resource`, `resource_in_use`, `archived_goal`, `csrf_failed`,
+`reauth_failed` e `idempotency_conflict`; está cubierto por 8 pruebas
+unitarias, no por endpoints reales todavía.
 
 ### 1.7 Reglas transversales
 
@@ -231,6 +239,29 @@ transacción.
 | 32 | POST | `/savings-goals/{id}/contributions/` | Crear el único canal de aportes (`savings_transfer`). | Sí |
 | 33 | GET | `/dashboard/summary/` | Resumen del dashboard por mes. | Sí |
 | 34 | GET | `/reports/overview/` | Datos consolidados de reportes por rango. | Sí |
+
+**Estado de implementación:** ninguno de estos 34 endpoints está implementado.
+La tabla anterior es el contrato objetivo, no una lista de rutas disponibles.
+
+**Orden de entrega:** el agrupamiento de la tabla no es el orden de
+implementación. La secuencia de modelos y migraciones está en
+[arquitectura, §13](./backend-architecture.md) y
+[diseño de base de datos, §3.2](./database-design.md).
+A nivel de API se traduce en:
+
+| Fase | Endpoints que se habilitan |
+| --- | --- |
+| 1 | Autenticación y perfil (`/auth/*`, `/users/me/*`); el registro completo con categorías predeterminadas se cierra en la fase 2. |
+| 2 | `/categories/*` y finalización del registro con catálogo inicial. |
+| 3 | `/savings-goals/*` sin aportes. |
+| 4 | `/movements/*` para `income`/`expense`, con `Idempotency-Key`. |
+| 5 | `/budgets/*` y consumo mensual. |
+| 6 | `/savings-goals/{id}/contributions/*`; único canal de `savings_transfer`. |
+| 7 | `/dashboard/*` y `/reports/*`. |
+
+La autenticación JWT/cookies/CSRF es transversal y debe estar operativa antes de
+exponer las rutas protegidas. La suite actual de 29 pruebas no ejerce ninguno de
+estos endpoints.
 
 Quedan **fuera del MVP** y no tienen endpoint: retiros de ahorro, cuentas
 bancarias, saldos iniciales, cambio de correo, recuperación de contraseña,

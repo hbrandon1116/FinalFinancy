@@ -1,7 +1,11 @@
 # Diseño de base de datos — FinanzasPro
 
-> Estado: **diseño oficial del MVP, pendiente de implementación**. Este documento
-> no implementa modelos Django ni migraciones.
+> Estado: **diseño canónico del MVP; implementación parcial**. El proyecto Django,
+> el modelo `User` y los modelos base ya existen en código. Las entidades
+> financieras no están implementadas y no se ha generado ni aplicado ninguna
+> migración; por tanto, el esquema descrito aquí todavía no está creado en
+> PostgreSQL. Este documento define el objetivo y no debe interpretarse como una
+> base de datos ya desplegada.
 > Base de datos objetivo: **PostgreSQL 15+**, Django 5.x y Django REST Framework.
 > Las decisiones de este documento son la referencia canónica para el contrato de
 > API y las reglas de negocio.
@@ -9,20 +13,41 @@
 ## 1. Contexto y alcance
 
 El repositorio contiene un frontend React/Vite con los módulos Dashboard, Login,
-Registro, Movimientos, Presupuestos, Ahorro y Reportes. El directorio `Backend/`
-está vacío: todavía no existe proyecto Django ni migraciones.
+Registro, Movimientos, Presupuestos, Ahorro y Reportes. El backend Django ya
+existe, con settings separados para desarrollo, pruebas y producción; la
+autenticación JWT está configurada pero sus endpoints y cookies siguen
+pendientes.
 
-Este diseño cubre las cinco entidades solicitadas:
+Este diseño cubre cinco entidades de negocio y una tabla de infraestructura:
 
 - `User`: usuario propietario de todos los datos financieros.
 - `Category`: categoría de ingreso o gasto, siempre perteneciente a un usuario.
 - `Movement`: ingreso, gasto o transferencia a una meta de ahorro.
 - `Budget`: límite mensual de gasto por categoría.
 - `SavingsGoal`: meta de ahorro.
+- `IdempotencyRecord`: infraestructura de protección contra reintentos duplicados;
+  no es una entidad financiera.
 
 La entidad `Movement` es la **única fuente de verdad** de los movimientos
 financieros. Los aportes a metas **no** se guardan en una tabla independiente:
 son `Movement` de tipo `savings_transfer` asociados a una `SavingsGoal`.
+
+### 1.1 Estado de implementación
+
+| Elemento | Estado |
+| --- | --- |
+| `User` (`users.User`) | Implementado en código, sin migración aplicada. |
+| `UUIDModel`, `TimeStampedModel`, `BaseModel` | Implementados como modelos abstractos; no crean tablas. |
+| `full_name` | Validación y normalización implementadas en `User`; constraint declarada pero no aplicada físicamente en PostgreSQL. |
+| `Category`, `SavingsGoal`, `Movement`, `Budget` | No implementados. |
+| `IdempotencyRecord` | No implementado; módulo de idempotencia es scaffolding. |
+| Endpoints de negocio | No implementados; `urlpatterns` de las apps vacío. |
+| Tests | 29 pruebas no-DB; no cubren entidades financieras ni constraints ejecutadas contra PostgreSQL. |
+| Migraciones | Ninguna generada ni aplicada. Las carpetas `migrations/` solo contienen `__init__.py`. |
+
+La secuencia de creación de tablas y sus dependencias se detalla en §3.2. Ninguna
+de las constraints descritas en este documento está activa en una base real
+hasta que se genere y aplique la migración correspondiente.
 
 ## 2. Convenciones de diseño
 
@@ -41,7 +66,7 @@ son `Movement` de tipo `savings_transfer` asociados a una `SavingsGoal`.
 | Auditoría | `created_at` y `updated_at` en las entidades de negocio; `created_at`/`expires_at` en la tabla de idempotencia. |
 | Multi-tenencia | Cada fila de negocio tiene `user_id`. Toda consulta se filtra por el usuario autenticado. |
 
-### 2.1 Nombres físicos propuestos
+### 2.1 Nombres físicos
 
 | Entidad | Tabla |
 | --- | --- |
@@ -156,20 +181,40 @@ erDiagram
   reintento de una creación financiera no duplique el movimiento. Es una tabla de
   infraestructura, no una entidad financiera.
 
+### 3.2 Orden de creación de tablas y dependencias
+
+El orden del diagrama no es necesariamente el orden de implementación. Para
+respetar las FK y poder probar cada fase se usa esta secuencia:
+
+| Orden | Tabla / modelo | Depende de | Migración |
+| --- | --- | --- | --- |
+| 1 | `users_user` (`User`) | Ninguna. Los modelos base son abstractos. | Primera migración de `users`; debe aplicarse antes de las tablas financieras. |
+| 2 | `categories_category` (`Category`) | `users_user`. | Migración de `categories` posterior a `users`. |
+| 3 | `savings_savingsgoal` (`SavingsGoal`) | `users_user`. | Migración de `savings` posterior a `users`. |
+| 4 | `movements_movement` (`Movement`) y `common_idempotencyrecord` | `users_user`, `categories_category` y `savings_savingsgoal`. `IdempotencyRecord` solo referencia `User`; no tiene FK a `Movement`. | Migraciones de `movements` y `common` después de categorías y metas. |
+| 5 | `budgets_budget` (`Budget`) | `users_user` y `categories_category` para el esquema. Su consumo de lectura usa `movements_movement`, aunque no exista FK directa. | Migración de `budgets` posterior a `categories`; los selectores se prueban con movimientos ya creados. |
+| 6 | Aportes a metas | `movements_movement` y `savings_savingsgoal`. No crean tabla propia. | No requiere migración salvo que se añadan índices o constraints. |
+| 7 | Dashboard, reportes y analítica | Todos los modelos anteriores; no crean tablas. | Sin migración. |
+
+Las migraciones son incrementales y deben respetar esta dependencia. Generar
+`Movement` antes de `SavingsGoal` produciría una FK inválida; generar `Budget`
+antes de `Category` impediría su FK. La fase 6 no crea una tabla de aportes: el
+aporte sigue siendo un `Movement`. La fase 7 es solo de lectura.
+
 ## 4. Definición de tablas
 
 ### 4.1 `User` (`users_user`)
 
 Usuario personalizado basado en `AbstractUser`, sin `username`; el correo es el
-identificador de autenticación. Debe existir un `UserManager` personalizado que
-normalice el correo antes de guardar.
+identificador de autenticación. Existe un `UserManager` personalizado que
+normaliza el correo antes de guardar.
 
 | Columna | Tipo PostgreSQL | Nulo | Default | Restricciones / notas |
 | --- | --- | --- | --- | --- |
 | `id` | `uuid` | No | `uuid4()` | PK. |
 | `email` | `varchar(254)` | No | — | Login. Formato de correo válido. Único con `LOWER(email)`. Se guarda normalizado. |
 | `password` | `varchar(128)` | No | — | Hash administrado por Django; nunca se expone en la API ni se guarda en claro. |
-| `full_name` | `varchar(150)` | No | — | Nombre completo mostrado en la UI. `TRIM`, mínimo 2 caracteres. |
+| `full_name` | `varchar(150)` | No | — | Nombre completo mostrado en la UI. Se normaliza con `strip()` en `User.clean()`/`save()`; mínimo 2 caracteres después de limpiar. |
 | `terms_accepted_at` | `timestamptz` | Sí | `NULL` | Fecha/hora en que el usuario aceptó términos y condiciones. El registro público la exige y la fija el servidor; es `NULL` solo para cuentas creadas por administración. |
 | `is_active` | `boolean` | No | `true` | Permite desactivar o anonimizar la cuenta sin borrar la historia financiera. |
 | `is_staff` | `boolean` | No | `false` | Acceso al admin. |
@@ -183,7 +228,18 @@ normalice el correo antes de guardar.
 **Restricciones**
 
 - `UNIQUE INDEX users_user_email_lower_uniq ON users_user (LOWER(email))`.
-- `CHECK (char_length(trim(full_name)) >= 2)`.
+- `CHECK users_user_full_name_valid`:
+  ```sql
+  full_name IS NOT NULL
+  AND full_name::text ~ '^[^[:space:]].*[^[:space:]]$'
+  ```
+  Exige que el primer y el último carácter no sean espacios; junto con el
+  `strip()` de `User.clean()`/`save()`, rechaza valores nulos, vacíos, de un solo
+  carácter y compuestos solo por espacios. La validación `MinLengthValidator(2)`
+  se conserva a nivel de modelo.
+- La constraint `users_user_full_name_valid` está declarada en
+  `User.Meta.constraints`, pero **no está aplicada físicamente en PostgreSQL**
+  porque no se ha generado ni ejecutado una migración.
 - `CHECK (email = lower(email))` para mantener la normalización.
 - `CHECK (terms_accepted_at IS NOT NULL OR is_staff = true)`: toda cuenta
   pública debe registrar la aceptación; las cuentas administrativas pueden
