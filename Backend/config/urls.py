@@ -9,6 +9,9 @@ from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Temporary Render/Supabase connectivity check. Remove this route when the
+    # check is retired.
+    path("api/v1/health/", include("apps.common.urls")),
     path("api/v1/", include("apps.users.urls")),
     path("api/v1/", include("apps.categories.urls")),
     path("api/v1/", include("apps.movements.urls")),

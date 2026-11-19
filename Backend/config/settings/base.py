@@ -132,6 +132,11 @@ DATABASES = {
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = False
 
+# Temporary operational endpoint for the database connectivity check. If it is
+# empty, the endpoint stays disabled. Remove this setting when the endpoint is
+# removed.
+DATABASE_HEALTH_TOKEN = os.getenv("DATABASE_HEALTH_TOKEN") or ""
+
 # ---------------------------------------------------------------------------
 # Authentication and API
 # ---------------------------------------------------------------------------
