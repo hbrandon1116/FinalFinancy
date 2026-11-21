@@ -1,8 +1,8 @@
 """Custom user model.
 
-The schema follows docs/backend/database-design.md §4.1. No migration is
-generated or applied in phase 1; the table will be created in phase 2 once the
-authentication flow is implemented.
+The schema follows docs/backend/database-design.md §4.1. This model belongs to
+phase 1 (User, base models and initial authentication). No migration is
+generated or applied by the current preparation step.
 """
 
 import uuid
@@ -26,6 +26,9 @@ class User(AbstractUser):
     last_name = None
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Django requires USERNAME_FIELD to be unique. This exact unique index,
+    # combined with the lowercase check below, guarantees case-insensitive
+    # uniqueness without a second functional unique index.
     email = models.EmailField(max_length=254, unique=True)
     full_name = models.CharField(
         max_length=150,
@@ -47,10 +50,6 @@ class User(AbstractUser):
         verbose_name = "usuario"
         verbose_name_plural = "usuarios"
         constraints = [
-            models.UniqueConstraint(
-                Lower("email"),
-                name="users_user_email_lower_uniq",
-            ),
             models.CheckConstraint(
                 condition=Q(email=Lower("email")),
                 name="users_user_email_lower_check",

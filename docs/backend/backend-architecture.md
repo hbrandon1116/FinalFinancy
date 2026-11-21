@@ -2,9 +2,10 @@
 
 > Estado: **arquitectura vigente del MVP; implementación por fases en curso**.
 > La base técnica (proyecto Django, settings por entorno, `User`, modelos base y
-> manejador global de errores) está implementada. Las entidades financieras, los
-> endpoints de negocio y las migraciones todavía no existen. La suite actual
-> tiene 29 pruebas exitosas, todas sin acceso a base de datos.
+> manejador global de errores) está implementada. Las entidades financieras y los
+> endpoints de negocio todavía no existen. La migración inicial de `users` está
+> generada pero no aplicada. La suite actual tiene 29 pruebas exitosas, todas sin
+> acceso a base de datos.
 > Documentos relacionados: [diseño de base de datos](./database-design.md),
 > [contrato de API](./api-contract.md) y [reglas de negocio](./business-rules.md).
 > Las decisiones de esos documentos son la referencia canónica.
@@ -15,8 +16,8 @@
 | --- | --- |
 | `Backend/` | Proyecto Django 5.2 + Django REST Framework existente, con `manage.py`, settings separados (`base`, `dev`, `test`, `prod`), dependencias fijadas y estructura por apps. |
 | Modelos implementados | `users.User` y los modelos abstractos `UUIDModel`, `TimeStampedModel` y `BaseModel`. No existen modelos financieros concretos. |
-| Migraciones | No se generó ni aplicó ninguna migración. Las carpetas `migrations/` solo contienen `__init__.py`; por tanto, las tablas descritas en el diseño no están creadas por este repositorio. |
-| `full_name` | La restricción `users_user_full_name_valid` está declarada en el modelo `User`; todavía no está aplicada físicamente en PostgreSQL porque no existe una migración. |
+| Migraciones | `users/0001_initial.py` está generada, pero no se aplicó. Las demás carpetas `migrations/` solo contienen `__init__.py`; por tanto, las tablas descritas en el diseño no están creadas por este repositorio. |
+| `full_name` | La restricción `users_user_full_name_valid` está declarada en el modelo `User` y fue incluida en la migración inicial; todavía no está aplicada físicamente en PostgreSQL porque la migración no se ha ejecutado. |
 | Autenticación | SimpleJWT está configurado (rotación, blacklist y duración), pero las vistas de registro/login/refresh/logout, las cookies `HttpOnly` y la aplicación de CSRF están pendientes. |
 | API | `config/urls.py` monta `/api/v1/` y las apps tienen sus módulos `urls.py`, pero todos los `urlpatterns` de negocio están vacíos. No hay endpoints implementados. |
 | Errores | `apps/common/exception_handler.py` está implementado y normaliza los errores; conserva los códigos de contrato declarados por las excepciones. |
@@ -76,12 +77,13 @@ Hallazgos relevantes para la integración:
   datos.
 - Idempotencia transaccional y modelo `IdempotencyRecord`.
 - Modelos financieros `Category`, `SavingsGoal`, `Movement` y `Budget`.
-- Migraciones. La primera migración del `User` debe generarse al iniciar la
-  fase 1; cada fase que cambie el esquema debe incluir la suya.
+- Migraciones. La migración inicial de `users` ya está generada y debe aplicarse
+  al iniciar la fase 1; cada fase que cambie el esquema debe incluir la suya.
 
 **Pendiente de verificación operativa**
 
-- Generar y aplicar las migraciones en PostgreSQL/Supabase.
+- Aplicar la migración inicial de `users` y las migraciones posteriores en
+  PostgreSQL/Supabase.
 - Verificar las variables de producción en Render y los orígenes exactos de
   CORS/CSRF antes del despliegue.
 - Ejecutar pruebas con base de datos real para constraints, transacciones e
@@ -159,7 +161,7 @@ flowchart LR
 | API | Django REST Framework `3.18.3` | Instalado y configurado. |
 | Autenticación | `djangorestframework-simplejwt` `5.5.1` + blacklist | Instalado; settings aplicados; endpoints pendientes. |
 | Driver PostgreSQL | `psycopg[binary]` `3.3.9` | Instalado. |
-| Base de datos | PostgreSQL 15+; Supabase como destino de despliegue | Configurada por `DATABASE_URL`; sin migraciones ejecutadas desde este repositorio. |
+| Base de datos | PostgreSQL 15+; Supabase como destino de despliegue | Configurada por `DATABASE_URL`; migración inicial de `users` generada, sin migraciones ejecutadas desde este repositorio. |
 | CORS | `django-cors-headers` `4.9.0` | Instalado y configurado. |
 | Servidor WSGI | Gunicorn `25.1.0` | Instalado para producción. |
 | OpenAPI | `drf-spectacular` (opcional) | No instalado. |
@@ -210,7 +212,7 @@ Backend/
 │   │   ├── urls.py               # urlpatterns vacío
 │   │   ├── services.py           # scaffolding; fase 1-2
 │   │   ├── tokens.py             # scaffolding; fase 1-2
-│   │   ├── migrations/           # solo __init__.py; ninguna migración
+│   │   ├── migrations/           # 0001_initial.py generada; sin aplicar
 │   │   └── tests/
 │   ├── categories/
 │   │   ├── models.py             # scaffolding; fase 2
@@ -258,9 +260,10 @@ Backend/
 ```
 
 Los módulos con «scaffolding» contienen docstrings y firmas mínimas, no lógica
-de negocio. Ninguna carpeta `migrations/` tiene archivos de migración; solo el
-`__init__.py` que la marca como paquete. Por eso ninguna tabla del diseño existe
-todavía en PostgreSQL.
+de negocio. Solo `users/migrations/` contiene una migración inicial; las demás
+carpetas tienen únicamente el `__init__.py` que las marca como paquete. Como la
+migración no se ha aplicado, ninguna tabla del diseño existe todavía en
+PostgreSQL.
 
 ### 5.1 Responsabilidad de cada app
 
@@ -825,7 +828,7 @@ correspondientes.
 
 | Fase | Entregable | Dependencia y migración | Criterio de aceptación |
 | --- | --- | --- | --- |
-| 0 | Línea base actual: proyecto Django, settings, `User`, modelos base, exception handler y suite no-DB | Ya completada; no hay migraciones. | `manage.py check` sin errores; 29 tests exitosos. |
+| 0 | Línea base actual: proyecto Django, settings, `User`, modelos base, exception handler y suite no-DB | Ya completada; migración inicial de `users` generada, sin aplicar. | `manage.py check` sin errores; 29 tests exitosos. |
 | 1 | `User` + modelos base + núcleo de autenticación: access token JWT, refresh en cookie `HttpOnly`, logout, rotación/blacklist, CSRF y endpoints de login/refresh/logout/csrf. El registro completo se cierra en la fase 2 junto con el catálogo. | Ninguna dependencia de modelos financieros. Migración inicial de `users`; los modelos abstractos no crean tablas. El registro con categorías depende de `Category` (fase 2). | Gate de autenticación operativo y probado: login, refresh, logout, rotación/blacklist, cookie `HttpOnly`, CSRF y rechazo de accesos no autenticados. Migración de `users` aplicada; sin tablas financieras todavía. |
 | 2 | `Category` + catálogo predeterminado + cierre del registro | **Solo después del gate de la fase 1.** Depende de `User`. Migración de `categories` posterior a `users`. El alta de usuario crea el catálogo en la misma transacción. | Autenticación previamente probada; CRUD de categorías, unicidad, propiedad, `PROTECT` y catálogo inicial probados. |
 | 3 | `SavingsGoal` + CRUD y archivado | **Solo después del gate de la fase 1.** Depende de `User`. Migración de `savings` posterior a `users`. | Autenticación previamente probada; meta con progreso derivado, `status` calculado, archivo lógico y unicidad de metas activas; sin aportes todavía. |
@@ -841,8 +844,7 @@ protegidos mientras el gate de la fase 1 no esté verde.
 
 Cada fase que cambie el esquema debe incluir su migración y sus pruebas. Las
 fases 6 y 7 no crean tablas; solo generan migración si añaden constraints o
-índices. En esta actualización documental no se generó ni aplicó ninguna
-migración.
+índices. La migración inicial de `users` está generada, pero no se aplicó.
 
 ## 14. Decisiones pendientes (no bloqueantes)
 
@@ -868,8 +870,9 @@ metas, periodos completos, base 50/30/20 sin ingresos ni baja de cuenta.
 
 - Implementar los modelos financieros `Category`, `SavingsGoal`, `Movement`,
   `Budget` e `IdempotencyRecord`.
-- Generar y aplicar las migraciones; la restricción de `full_name` y las demás
-  constraints no están físicamente en PostgreSQL hasta ese paso.
+- Aplicar la migración inicial de `users` y generar/aplicar las migraciones
+  financieras; la restricción de `full_name` y las demás constraints no están
+  físicamente en PostgreSQL hasta ese paso.
 - Implementar endpoints, serializers, servicios y selectores de negocio.
 - Completar la autenticación por JWT en cookie, CSRF y servicios de cuenta.
 - Implementar las reglas financieras y sus pruebas con base de datos.

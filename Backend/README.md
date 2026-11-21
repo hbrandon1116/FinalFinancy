@@ -1,6 +1,6 @@
 # FinalFinancy — Backend
 
-Backend Django del MVP de FinalFinancy. Esta fase deja el proyecto, la
+Backend Django del MVP de FinalFinancy. La base técnica deja el proyecto, la
 configuración de Django REST Framework/SimpleJWT y PostgreSQL preparados, pero
 **no implementa todavía los modelos financieros ni los endpoints de negocio**.
 
@@ -62,7 +62,7 @@ Variables principales:
 | --- | --- |
 | `DJANGO_SECRET_KEY` | Clave de Django. Obligatoria en producción; mínimo 32 caracteres y sin placeholders. |
 | `DJANGO_DEBUG` | `true` solo en desarrollo. |
-| `DJANGO_ALLOWED_HOSTS` | Hosts permitidos, separados por coma. |
+| `DJANGO_ALLOWED_HOSTS` | Hosts permitidos, separados por coma. Obligatoria en producción. |
 | `DATABASE_URL` | URL de PostgreSQL. Obligatoria en producción. |
 | `DATABASE_CONN_MAX_AGE` | Reutilización de conexiones; por defecto 60 s. |
 | `CORS_ALLOWED_ORIGINS` | Orígenes exactos del frontend. Obligatoria en producción, sin comodines ni barra final. |
@@ -76,9 +76,9 @@ Variables principales:
 | `IDEMPOTENCY_TTL_HOURS` | Ventana de idempotencia; por defecto 24 h. |
 
 En producción, `prod.py` detiene el arranque si `DJANGO_SECRET_KEY`,
-`DATABASE_URL`, `CORS_ALLOWED_ORIGINS` o `CSRF_TRUSTED_ORIGINS` faltan o no
-cumplen el formato anterior. No uses valores reales en este README ni en
-`.env.example`.
+`DATABASE_URL`, `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` o
+`CSRF_TRUSTED_ORIGINS` faltan o no cumplen el formato anterior. No uses valores
+reales en este README ni en `.env.example`.
 
 `DATABASE_URL` debe tener el formato:
 
@@ -113,23 +113,22 @@ Comprueba la conexión con:
 python manage.py check --database default
 ```
 
-## 5. Migraciones y estado de esta fase
+## 5. Migraciones y estado actual
 
-En esta fase se definió el modelo base `users.User` y se configuró
-`AUTH_USER_MODEL = "users.User"` antes de cualquier migración. **No se generaron
-ni aplicaron migraciones**: no se crearon tablas de usuarios, categorías,
-movimientos, presupuestos ni metas.
+El modelo base `users.User` fue definido y se configuró
+`AUTH_USER_MODEL = "users.User"` antes de cualquier migración. La migración
+inicial `apps/users/migrations/0001_initial.py` ya fue generada, pero **no se
+aplicó**: no se crearon tablas de usuarios, categorías, movimientos,
+presupuestos ni metas.
 
-Cuando comience la fase 2 (autenticación), se debe generar la migración inicial
-del usuario personalizado y aplicarla junto con las migraciones de Django:
+Para aplicarla, cuando PostgreSQL esté disponible, ejecuta:
 
 ```powershell
-python manage.py makemigrations users
 python manage.py migrate
 ```
 
-No ejecutes `migrate` antes de que exista esa migración: Django necesita crear
-el usuario personalizado desde la primera migración.
+La migración de `users` debe aplicarse antes que las de `admin` y
+`token_blacklist`, que dependen del usuario configurado.
 
 ## 6. Comprobar y ejecutar
 
@@ -141,9 +140,9 @@ python manage.py runserver 8000
 
 `runserver` comprueba las migraciones y necesita PostgreSQL disponible; si el
 servicio de base de datos está detenido, el arranque no completa. La API se
-expone bajo `http://localhost:8000/api/v1/`. En esta fase las rutas están
-preparadas pero los endpoints de negocio todavía no existen. El panel de Django
-está en `http://localhost:8000/admin/`.
+expone bajo `http://localhost:8000/api/v1/`. Las rutas están preparadas pero los
+endpoints de negocio todavía no existen. El panel de Django está en
+`http://localhost:8000/admin/`.
 
 ## 7. Estructura
 
@@ -185,7 +184,7 @@ Cada app contiene la estructura para sus futuros `models.py`, `serializers.py`,
   `CSRF_TRUSTED_ORIGINS`. Los orígenes deben ser exactos, sin comodines ni
   barra final.
 - **La autenticación por cookies HttpOnly + CSRF no está implementada todavía**;
-  solo quedaron sus ajustes preparados. Se implementará en la fase 2.
+  solo quedaron sus ajustes preparados. Se implementará en la fase 1.
 - Los endpoints de registro, login, refresh y logout no existen aún.
 - `.env` está excluido de Git y `.env.example` solo contiene placeholders.
 - Si una credencial se expone en Git, eliminar el archivo no basta: debe

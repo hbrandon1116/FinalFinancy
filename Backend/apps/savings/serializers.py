@@ -1,4 +1,5 @@
 """Savings API serializers.
 
-To be implemented in phase 6.
+SavingsGoal serializers will be implemented in phase 3. Contribution serializers
+are completed with the contributions API in phase 6.
 """

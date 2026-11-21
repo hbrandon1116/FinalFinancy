@@ -1,7 +1,7 @@
 """Root URL configuration.
 
-All API routes live under /api/v1/. The app-level URL modules are intentionally
-empty in phase 1; their endpoints will be added in later phases.
+All API routes live under /api/v1/. Authentication routes are added in phase 1;
+the remaining app-level routes are added in later phases.
 """
 
 from django.contrib import admin

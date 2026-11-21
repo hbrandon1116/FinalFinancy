@@ -1,9 +1,9 @@
 # Diseño de base de datos — FinalFinancy
 
 > Estado: **diseño canónico del MVP; implementación parcial**. El proyecto Django,
-> el modelo `User` y los modelos base ya existen en código. Las entidades
-> financieras no están implementadas y no se ha generado ni aplicado ninguna
-> migración; por tanto, el esquema descrito aquí todavía no está creado en
+> el modelo `User` y los modelos base ya existen en código. La migración inicial
+> de `users` fue generada, pero no se aplicó; las entidades financieras no están
+> implementadas. Por tanto, el esquema descrito aquí todavía no está creado en
 > PostgreSQL. Este documento define el objetivo y no debe interpretarse como una
 > base de datos ya desplegada.
 > Base de datos objetivo: **PostgreSQL 15+**, Django 5.x y Django REST Framework.
@@ -36,18 +36,18 @@ son `Movement` de tipo `savings_transfer` asociados a una `SavingsGoal`.
 
 | Elemento | Estado |
 | --- | --- |
-| `User` (`users.User`) | Implementado en código, sin migración aplicada. |
+| `User` (`users.User`) | Implementado en código; migración inicial generada, sin aplicar. |
 | `UUIDModel`, `TimeStampedModel`, `BaseModel` | Implementados como modelos abstractos; no crean tablas. |
 | `full_name` | Validación y normalización implementadas en `User`; constraint declarada pero no aplicada físicamente en PostgreSQL. |
 | `Category`, `SavingsGoal`, `Movement`, `Budget` | No implementados. |
 | `IdempotencyRecord` | No implementado; módulo de idempotencia es scaffolding. |
 | Endpoints de negocio | No implementados; `urlpatterns` de las apps vacío. |
 | Tests | 29 pruebas no-DB; no cubren entidades financieras ni constraints ejecutadas contra PostgreSQL. |
-| Migraciones | Ninguna generada ni aplicada. Las carpetas `migrations/` solo contienen `__init__.py`. |
+| Migraciones | `users/0001_initial.py` generada, sin aplicar. Las demás carpetas `migrations/` solo contienen `__init__.py`. |
 
 La secuencia de creación de tablas y sus dependencias se detalla en §3.2. Ninguna
 de las constraints descritas en este documento está activa en una base real
-hasta que se genere y aplique la migración correspondiente.
+hasta que se aplique la migración correspondiente.
 
 ## 2. Convenciones de diseño
 
@@ -212,7 +212,7 @@ normaliza el correo antes de guardar.
 | Columna | Tipo PostgreSQL | Nulo | Default | Restricciones / notas |
 | --- | --- | --- | --- | --- |
 | `id` | `uuid` | No | `uuid4()` | PK. |
-| `email` | `varchar(254)` | No | — | Login. Formato de correo válido. Único con `LOWER(email)`. Se guarda normalizado. |
+| `email` | `varchar(254)` | No | — | Login. Formato de correo válido. `UNIQUE`; el `CHECK` de minúsculas hace que la unicidad sea case-insensitive. Se guarda normalizado. |
 | `password` | `varchar(128)` | No | — | Hash administrado por Django; nunca se expone en la API ni se guarda en claro. |
 | `full_name` | `varchar(150)` | No | — | Nombre completo mostrado en la UI. Se normaliza con `strip()` en `User.clean()`/`save()`; mínimo 2 caracteres después de limpiar. |
 | `terms_accepted_at` | `timestamptz` | Sí | `NULL` | Fecha/hora en que el usuario aceptó términos y condiciones. El registro público la exige y la fija el servidor; es `NULL` solo para cuentas creadas por administración. |
@@ -227,7 +227,9 @@ normaliza el correo antes de guardar.
 
 **Restricciones**
 
-- `UNIQUE INDEX users_user_email_lower_uniq ON users_user (LOWER(email))`.
+- `UNIQUE (email)`: Django exige que el `USERNAME_FIELD` sea único. La
+  combinación de este índice exacto con `CHECK (email = lower(email))` garantiza
+  unicidad case-insensitive sin un segundo índice funcional.
 - `CHECK users_user_full_name_valid`:
   ```sql
   full_name IS NOT NULL
@@ -238,8 +240,8 @@ normaliza el correo antes de guardar.
   carácter y compuestos solo por espacios. La validación `MinLengthValidator(2)`
   se conserva a nivel de modelo.
 - La constraint `users_user_full_name_valid` está declarada en
-  `User.Meta.constraints`, pero **no está aplicada físicamente en PostgreSQL**
-  porque no se ha generado ni ejecutado una migración.
+  `User.Meta.constraints` y fue incluida en la migración inicial, pero **no está
+  aplicada físicamente en PostgreSQL** porque la migración no se ha ejecutado.
 - `CHECK (email = lower(email))` para mantener la normalización.
 - `CHECK (terms_accepted_at IS NOT NULL OR is_staff = true)`: toda cuenta
   pública debe registrar la aceptación; las cuentas administrativas pueden
@@ -251,12 +253,17 @@ normaliza el correo antes de guardar.
 
 **Índices**
 
-- El índice único funcional sobre `LOWER(email)` es el único necesario para el
-  login y la unicidad. No se indexan campos de perfil que no se consultan.
+- El índice único de `email` es el único necesario para el login y la unicidad;
+  el `CHECK` de minúsculas impide variantes de mayúsculas. No se indexan campos
+  de perfil que no se consultan.
 
 **Decisiones**
 
 - No se usa `username`. El frontend inicia sesión con `email`.
+- Se usa `unique=True` en `email` y no un `UniqueConstraint(Lower("email"))`
+  adicional: Django exige unicidad del campo de login y dos índices únicos
+  funcional/exacto serían redundantes. El `CHECK` de minúsculas conserva la
+  semántica case-insensitive.
 - El cambio de correo queda **fuera del MVP**. No hay endpoint ni verificación
   de correo nuevo en esta versión.
 - La aceptación de términos se registra con `terms_accepted_at`; el cliente envía

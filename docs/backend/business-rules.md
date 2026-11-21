@@ -3,9 +3,10 @@
 > Estado: **reglas oficiales vigentes del MVP; implementación financiera
 > pendiente**. Este documento conserva las fórmulas y decisiones de negocio; no
 > implementa modelos ni servicios. Todavía no existen `Category`, `SavingsGoal`,
-> `Movement`, `Budget` ni `IdempotencyRecord`, no hay migraciones y los endpoints
-> financieros no están habilitados. Las constraints descritas son el objetivo de
-> diseño, no un esquema ya aplicado en PostgreSQL.
+> `Movement`, `Budget` ni `IdempotencyRecord`; la migración inicial de `users` está
+> generada pero no aplicada, y los endpoints financieros no están habilitados. Las
+> constraints descritas son el objetivo de diseño, no un esquema ya aplicado en
+> PostgreSQL.
 > No modifican el frontend actual.
 > Entidades y campos canónicos: [diseño de base de datos](./database-design.md).
 

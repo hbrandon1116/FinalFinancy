@@ -1,5 +1,5 @@
 """Savings write services.
 
-Goal management and the contributions orchestration will be implemented in
-phase 6.
+Goal management will be implemented in phase 3. The contributions orchestration
+will be implemented in phase 6.
 """

@@ -1,4 +1,5 @@
 """Savings API views.
 
-To be implemented in phase 6.
+SavingsGoal views will be implemented in phase 3. Contribution views are
+completed with the contributions API in phase 6.
 """

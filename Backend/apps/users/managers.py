@@ -4,7 +4,13 @@ from django.contrib.auth.base_user import BaseUserManager
 
 
 class UserManager(BaseUserManager):
-    """Manager for the email-based custom user model."""
+    """Manager for the email-based custom user model.
+
+    Normal users must be created with a server-generated ``terms_accepted_at``.
+    Registration must validate the public ``accept_terms`` flag before passing
+    that timestamp; the manager rejects omissions before reaching the database
+    constraint.
+    """
 
     use_in_migrations = True
 
@@ -22,12 +28,22 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_user(self, email: str | None, password: str | None = None, **extra_fields):
+    def create_user(
+        self, email: str | None, password: str | None = None, **extra_fields
+    ):
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
+        if not extra_fields.get("is_staff") and not extra_fields.get(
+            "terms_accepted_at"
+        ):
+            raise ValueError(
+                "terms_accepted_at es obligatorio para usuarios no staff."
+            )
         return self._create_user(email, password, **extra_fields)
 
-    def create_superuser(self, email: str | None, password: str | None = None, **extra_fields):
+    def create_superuser(
+        self, email: str | None, password: str | None = None, **extra_fields
+    ):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
 

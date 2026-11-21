@@ -194,8 +194,8 @@ SIMPLE_JWT = {
     "SIGNING_KEY": os.getenv("JWT_SIGNING_KEY") or SECRET_KEY,
 }
 
-# These values are read by the authentication implementation in phase 2. They
-# are settings only: token cookies and CSRF enforcement are not implemented yet.
+# These values are read by the phase 1 authentication implementation. They are
+# settings only: token cookies and CSRF enforcement are not implemented yet.
 REFRESH_COOKIE_NAME = "refresh_token"
 REFRESH_COOKIE_PATH = "/api/v1/auth/"
 REFRESH_COOKIE_HTTPONLY = True

@@ -1,4 +1,4 @@
 """Category API serializers.
 
-To be implemented in phase 3.
+To be implemented in phase 2.
 """

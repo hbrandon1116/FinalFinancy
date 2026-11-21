@@ -1,4 +1,4 @@
 """Category model.
 
-The Category model will be implemented in phase 3.
+The Category model will be implemented in phase 2.
 """
